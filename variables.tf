@@ -333,9 +333,7 @@ variable "branch_protections_v4" {
   #       pattern                         = string
   #       allows_deletions                = optional(bool, false)
   #       allows_force_pushes             = optional(bool, false)
-  #       blocks_creations                = optional(bool, false)
   #       enforce_admins                  = optional(bool, false)
-  #       push_restrictions               = optional(list(string), [])
   #       require_conversation_resolution = optional(bool, false)
   #       require_signed_commits          = optional(bool, false)
   #       required_linear_history         = optional(bool, false)
@@ -554,6 +552,71 @@ variable "app_installations" {
   type        = set(string)
   description = "(Optional) A list of GitHub App IDs to be installed in this repository."
   default     = []
+}
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# ENVIRONMENT CONFIGURATION
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+variable "environments" {
+  description = "(Optional) A list of deployment environments to create and configure."
+  type = list(object({
+    name              = string
+    wait_timer        = optional(number)
+    can_admins_bypass = optional(bool, true)
+
+    reviewers = optional(object({
+      teams = optional(list(string), [])
+      users = optional(list(string), [])
+    }))
+
+    deployment_branch_policy = optional(object({
+      protected_branches     = optional(bool, false)
+      custom_branch_policies = optional(bool, false)
+    }))
+
+    branch_patterns = optional(list(string), [])
+
+    secrets = optional(map(object({
+      plaintext = optional(string)
+      encrypted = optional(string)
+    })), {})
+
+    variables = optional(map(string), {})
+  }))
+  default = []
+
+  validation {
+    condition = alltrue([
+      for env in var.environments : env.wait_timer == null || (env.wait_timer >= 0 && env.wait_timer <= 43200)
+    ])
+    error_message = "Environment wait_timer must be between 0 and 43200 seconds (12 hours)."
+  }
+
+  validation {
+    condition = alltrue([
+      for env in var.environments : length(env.name) > 0 && length(env.name) <= 255
+    ])
+    error_message = "Environment name must be between 1 and 255 characters."
+  }
+
+  validation {
+    condition = alltrue([
+      for env in var.environments : alltrue([
+        for secret_name, secret_value in try(env.secrets, {}) :
+        (secret_value.plaintext != null) != (secret_value.encrypted != null)
+      ])
+    ])
+    error_message = "Each environment secret must have exactly one of 'plaintext' or 'encrypted' specified, not both."
+  }
+
+  validation {
+    condition = alltrue([
+      for env in var.environments :
+      !try(env.deployment_branch_policy.custom_branch_policies, false) || length(try(env.branch_patterns, [])) > 0
+    ])
+    error_message = "When custom_branch_policies is true, branch_patterns must be specified and non-empty."
+  }
 }
 
 # ------------------------------------------------------------------------------

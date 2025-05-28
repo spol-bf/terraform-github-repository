@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Add support for GitHub Environments with deployment policies, secrets, and variables
+- Add `environments` variable for configuring repository environments
+- Add environment-related outputs: `environments`, `environment_secrets`, `environment_variables`, `deployment_policies`
+- Add comprehensive example in `examples/with-environments/`
+- Add environment testing in unit tests
+
+### Changed
+
+- Update GitHub provider version constraint to support v6.x (latest: v6.6.0)
+- Update documentation and badges to reflect support for GitHub provider v4.20 to v6.x
+
+### Fixed
+
+- Fix environment secrets and variables to use correct resource types (`github_actions_environment_secret` and `github_actions_environment_variable`)
+- Remove unsupported branch protection v4 arguments (`blocks_creations` and `push_restrictions`)
+- Update outputs and documentation to reference correct resource types
+- Fix environment reviewers teams configuration to use team IDs instead of team slugs (GitHub provider requirement)
+- Add data source to look up team IDs from team slugs for environment reviewers
+
 ## [0.18.0]
 
 ### Added

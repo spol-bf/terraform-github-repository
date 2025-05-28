@@ -3,18 +3,18 @@
 [![Build Status](https://github.com/mineiros-io/terraform-github-repository/workflows/CI/CD%20Pipeline/badge.svg)](https://github.com/mineiros-io/terraform-github-repository/actions)
 [![GitHub tag (latest SemVer)](https://img.shields.io/github/v/tag/mineiros-io/terraform-github-repository.svg?label=latest&sort=semver)](https://github.com/mineiros-io/terraform-github-repository/releases)
 [![Terraform Version](https://img.shields.io/badge/terraform-1.x-623CE4.svg?logo=terraform)](https://github.com/hashicorp/terraform/releases)
-[![Github Provider Version](https://img.shields.io/badge/GH-4.10+-F8991D.svg?logo=terraform)](https://github.com/terraform-providers/terraform-provider-github/releases)
+[![Github Provider Version](https://img.shields.io/badge/GH-4.20+-F8991D.svg?logo=terraform)](https://github.com/integrations/terraform-provider-github/releases)
 [![Join Slack](https://img.shields.io/badge/slack-@mineiros--community-f32752.svg?logo=slack)](https://join.slack.com/t/mineiros-community/shared_invite/zt-ehidestg-aLGoIENLVs6tvwJ11w9WGg)
 
 # terraform-github-repository
 
 A [Terraform] module for creating a public or private repository on [Github].
 
-**_This module supports Terraform v1.x and is compatible with the Official Terraform GitHub Provider v4.20 and above from `integrations/github`._**
+**_This module supports Terraform v1.x and is compatible with the Official Terraform GitHub Provider v4.20 to v6.x from `integrations/github`._**
 
 **Attention: This module is incompatible with the Hashicorp GitHub Provider! The latest version of this module supporting `hashicorp/github` provider is `~> 0.10.0`**
 
-** Note: Versions 5.3.0, 5.4.0, and 5.5.0 of the Terraform Github Provider have broken branch protections support and should not be used.**
+** Note: This module now supports the latest GitHub provider versions (up to v6.x). For the most stable experience, use provider version 6.0 or later.**
 
 
 - [GitHub as Code](#github-as-code)
@@ -35,6 +35,7 @@ A [Terraform] module for creating a public or private repository on [Github].
     - [Webhooks Configuration](#webhooks-configuration)
     - [Secrets Configuration](#secrets-configuration)
     - [Autolink References Configuration](#autolink-references-configuration)
+    - [Environments Configuration](#environments-configuration)
     - [App Installations](#app-installations)
   - [Module Configuration](#module-configuration)
 - [Module Outputs](#module-outputs)
@@ -90,7 +91,8 @@ features like Branch Protection or Collaborator Management.
   Teams,
   Deploy Keys,
   Projects,
-  Repository Webhooks
+  Repository Webhooks,
+  GitHub Environments
 
 - _Features not yet implemented_:
   Project Columns support,
@@ -923,6 +925,143 @@ This is due to some terraform limitation and we will update the module once terr
 
     The template of the target URL used for the links; must be a valid URL and contain `<num>` for the reference number.
 
+#### Environments Configuration
+
+- [**`environments`**](#var-environments): *(Optional `list(environment)`)*<a name="var-environments"></a>
+
+  This resource allows you to create and manage deployment environments for GitHub repository.
+  Environments provide deployment protection rules and secrets for your repository.
+
+  Default is `[]`.
+
+  Each `environment` object in the list accepts the following attributes:
+
+  - [**`name`**](#attr-environments-name): *(**Required** `string`)*<a name="attr-environments-name"></a>
+
+    The name of the environment.
+
+  - [**`wait_timer`**](#attr-environments-wait_timer): *(Optional `number`)*<a name="attr-environments-wait_timer"></a>
+
+    The amount of time to delay a job after the job is initially triggered. The time (in minutes) must be an integer between 0 and 43,200 (30 days).
+
+    Default is `null`.
+
+  - [**`can_admins_bypass`**](#attr-environments-can_admins_bypass): *(Optional `bool`)*<a name="attr-environments-can_admins_bypass"></a>
+
+    Whether or not a user who is an administrator of the repository can bypass the configured protection rules for this environment.
+
+    Default is `true`.
+
+
+
+  - [**`reviewers`**](#attr-environments-reviewers): *(Optional `object(reviewers)`)*<a name="attr-environments-reviewers"></a>
+
+    The list of environment reviewers.
+
+    Default is `{}`.
+
+    The `reviewers` object accepts the following attributes:
+
+    - [**`teams`**](#attr-environments-reviewers-teams): *(Optional `list(string)`)*<a name="attr-environments-reviewers-teams"></a>
+
+      The list of team slugs that may review jobs that reference the environment. Teams must already have access to the repository.
+
+      Default is `[]`.
+
+    - [**`users`**](#attr-environments-reviewers-users): *(Optional `list(string)`)*<a name="attr-environments-reviewers-users"></a>
+
+      The list of user logins that may review jobs that reference the environment.
+
+      Default is `[]`.
+
+  - [**`deployment_branch_policy`**](#attr-environments-deployment_branch_policy): *(Optional `object(deployment_branch_policy)`)*<a name="attr-environments-deployment_branch_policy"></a>
+
+    The deployment branch policy for the environment.
+
+    Default is `{}`.
+
+    The `deployment_branch_policy` object accepts the following attributes:
+
+    - [**`protected_branches`**](#attr-environments-deployment_branch_policy-protected_branches): *(Optional `bool`)*<a name="attr-environments-deployment_branch_policy-protected_branches"></a>
+
+      Whether only branches with branch protection rules can deploy to this environment.
+
+      Default is `false`.
+
+    - [**`custom_branch_policies`**](#attr-environments-deployment_branch_policy-custom_branch_policies): *(Optional `bool`)*<a name="attr-environments-deployment_branch_policy-custom_branch_policies"></a>
+
+      Whether only branches that match the specified name patterns can deploy to this environment.
+
+      Default is `false`.
+
+  - [**`branch_patterns`**](#attr-environments-branch_patterns): *(Optional `list(string)`)*<a name="attr-environments-branch_patterns"></a>
+
+    The list of branch name patterns that can deploy to this environment. Required when `custom_branch_policies` is `true`.
+
+    Default is `[]`.
+
+  - [**`secrets`**](#attr-environments-secrets): *(Optional `map(object(secret))`)*<a name="attr-environments-secrets"></a>
+
+    A map of secrets for the environment.
+
+    Default is `{}`.
+
+    Each `secret` object accepts the following attributes:
+
+    - [**`plaintext`**](#attr-environments-secrets-plaintext): *(Optional `string`)*<a name="attr-environments-secrets-plaintext"></a>
+
+      The plaintext value of the secret.
+
+    - [**`encrypted`**](#attr-environments-secrets-encrypted): *(Optional `string`)*<a name="attr-environments-secrets-encrypted"></a>
+
+      The encrypted value of the secret using the GitHub public key in Base64 format.
+
+  - [**`variables`**](#attr-environments-variables): *(Optional `map(string)`)*<a name="attr-environments-variables"></a>
+
+    A map of variables for the environment.
+
+    Default is `{}`.
+
+  Example:
+
+  ```hcl
+  environments = [
+    {
+      name = "development"
+      deployment_branch_policy = {
+        custom_branch_policies = true
+      }
+      branch_patterns = ["develop", "feature/*"]
+      variables = {
+        API_URL = "https://dev-api.example.com"
+        DEBUG   = "true"
+      }
+      secrets = {
+        DATABASE_URL = { plaintext = "postgres://dev-db:5432/myapp" }
+      }
+    },
+    {
+      name = "production"
+      wait_timer = 300
+      can_admins_bypass = false
+      reviewers = {
+        teams = ["platform-team"]
+        users = ["deployment-manager"]
+      }
+      deployment_branch_policy = {
+        protected_branches = true
+      }
+      variables = {
+        API_URL = "https://api.example.com"
+        DEBUG   = "false"
+      }
+      secrets = {
+        DATABASE_URL = { plaintext = "postgres://prod-db:5432/myapp" }
+      }
+    }
+  ]
+  ```
+
 #### App Installations
 
 - [**`app_installations`**](#var-app_installations): *(Optional `set(string)`)*<a name="var-app_installations"></a>
@@ -937,7 +1076,7 @@ This is due to some terraform limitation and we will update the module once terr
   app_installations = ["05405144", "12556423"]
   ```
 
-### Module Configuration
+## Module Configuration
 
 - [**`module_depends_on`**](#var-module_depends_on): *(Optional `list(dependency)`)*<a name="var-module_depends_on"></a>
 
@@ -1019,6 +1158,22 @@ The following attributes are exported by the module:
 
   A map of deploy app installations keyed by installation id.
 
+- [**`environments`**](#output-environments): *(`object(environment)`)*<a name="output-environments"></a>
+
+  A map of environment objects keyed by environment name.
+
+- [**`environment_secrets`**](#output-environment_secrets): *(`object(environment_secret)`)*<a name="output-environment_secrets"></a>
+
+  A map of environment secrets keyed by environment:secret_name.
+
+- [**`environment_variables`**](#output-environment_variables): *(`object(environment_variable)`)*<a name="output-environment_variables"></a>
+
+  A map of environment variables keyed by environment:variable_name.
+
+- [**`deployment_policies`**](#output-deployment_policies): *(`object(deployment_policy)`)*<a name="output-deployment_policies"></a>
+
+  A map of deployment policies keyed by environment:pattern.
+
 ## External Documentation
 
 ### Terraform Github Provider Documentation
@@ -1029,6 +1184,10 @@ The following attributes are exported by the module:
 - https://registry.terraform.io/providers/integrations/github/latest/docs/resources/repository_deploy_key
 - https://registry.terraform.io/providers/integrations/github/latest/docs/resources/repository_project
 - https://registry.terraform.io/providers/integrations/github/latest/docs/resources/repository_autolink_reference
+- https://registry.terraform.io/providers/integrations/github/latest/docs/resources/repository_environment
+- https://registry.terraform.io/providers/integrations/github/latest/docs/resources/repository_environment_deployment_policy
+- https://registry.terraform.io/providers/integrations/github/latest/docs/resources/actions_environment_secret
+- https://registry.terraform.io/providers/integrations/github/latest/docs/resources/actions_environment_variable
 
 ## Module Versioning
 
@@ -1097,8 +1256,8 @@ Copyright &copy; 2020-2022 [Mineiros GmbH][homepage]
 [badge-license]: https://img.shields.io/badge/license-Apache%202.0-brightgreen.svg
 [badge-terraform]: https://img.shields.io/badge/terraform-1.x-623CE4.svg?logo=terraform
 [badge-slack]: https://img.shields.io/badge/slack-@mineiros--community-f32752.svg?logo=slack
-[badge-tf-gh]: https://img.shields.io/badge/GH-4.10+-F8991D.svg?logo=terraform
-[releases-github-provider]: https://github.com/terraform-providers/terraform-provider-github/releases
+[badge-tf-gh]: https://img.shields.io/badge/GH-4.20+-F8991D.svg?logo=terraform
+[releases-github-provider]: https://github.com/integrations/terraform-provider-github/releases
 [build-status]: https://github.com/mineiros-io/terraform-github-repository/actions
 [releases-github]: https://github.com/mineiros-io/terraform-github-repository/releases
 [releases-terraform]: https://github.com/hashicorp/terraform/releases

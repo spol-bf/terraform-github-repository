@@ -21,8 +21,8 @@ header {
   }
 
   badge "tf-gh" {
-    image = "https://img.shields.io/badge/GH-4.10+-F8991D.svg?logo=terraform"
-    url   = "https://github.com/terraform-providers/terraform-provider-github/releases"
+    image = "https://img.shields.io/badge/GH-4.20+-F8991D.svg?logo=terraform"
+    url   = "https://github.com/integrations/terraform-provider-github/releases"
     text  = "Github Provider Version"
   }
 
@@ -43,7 +43,7 @@ section {
 
     **Attention: This module is incompatible with the Hashicorp GitHub Provider! The latest version of this module supporting `hashicorp/github` provider is `~> 0.10.0`**
 
-    ** Note: Versions 5.3.0, 5.4.0, and 5.5.0 of the Terraform Github Provider have broken branch protections support and should not be used.**
+    ** Note: This module now supports the latest GitHub provider versions (up to v6.x). For the most stable experience, use provider version 6.0 or later.**
   END
 
   section {
@@ -1371,6 +1371,10 @@ section {
         - https://registry.terraform.io/providers/integrations/github/latest/docs/resources/repository_deploy_key
         - https://registry.terraform.io/providers/integrations/github/latest/docs/resources/repository_project
         - https://registry.terraform.io/providers/integrations/github/latest/docs/resources/repository_autolink_reference
+        - https://registry.terraform.io/providers/integrations/github/latest/docs/resources/repository_environment
+        - https://registry.terraform.io/providers/integrations/github/latest/docs/resources/repository_environment_deployment_policy
+        - https://registry.terraform.io/providers/integrations/github/latest/docs/resources/actions_environment_secret
+        - https://registry.terraform.io/providers/integrations/github/latest/docs/resources/actions_environment_variable
       END
     }
   }
@@ -1491,10 +1495,10 @@ references {
     value = "https://img.shields.io/badge/slack-@mineiros--community-f32752.svg?logo=slack"
   }
   ref "badge-tf-gh" {
-    value = "https://img.shields.io/badge/GH-4.10+-F8991D.svg?logo=terraform"
+    value = "https://img.shields.io/badge/GH-4.20+-F8991D.svg?logo=terraform"
   }
   ref "releases-github-provider" {
-    value = "https://github.com/terraform-providers/terraform-provider-github/releases"
+    value = "https://github.com/integrations/terraform-provider-github/releases"
   }
   ref "build-status" {
     value = "https://github.com/mineiros-io/terraform-github-repository/actions"

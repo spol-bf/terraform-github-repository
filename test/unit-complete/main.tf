@@ -158,6 +158,71 @@ module "repository" {
   autolink_references = var.autolink_references
 
   app_installations = var.app_installations
+
+  # Test GitHub Environments functionality
+  environments = [
+    {
+      name = "test-development"
+      
+      wait_timer          = 0
+      can_admins_bypass   = true
+      
+      deployment_branch_policy = {
+        protected_branches     = false
+        custom_branch_policies = true
+      }
+      branch_patterns = ["develop", "feature/*"]
+      
+      variables = {
+        TEST_ENV     = "development"
+        DEBUG        = "true"
+        API_URL      = "https://dev-api.test.com"
+        LOG_LEVEL    = "debug"
+      }
+      
+      secrets = {
+        TEST_SECRET = {
+          plaintext = "dev-secret-value"
+        }
+        API_KEY = {
+          plaintext = "dev-api-key-12345"
+        }
+      }
+    },
+    
+    {
+      name = "test-production"
+      
+      wait_timer          = 60
+      can_admins_bypass   = false
+      
+      reviewers = {
+        teams = [github_team.team.name]
+        users = [var.team_user]
+      }
+      
+      deployment_branch_policy = {
+        protected_branches     = true
+        custom_branch_policies = false
+      }
+      
+      variables = {
+        TEST_ENV  = "production"
+        DEBUG     = "false"
+        API_URL   = "https://api.test.com"
+        LOG_LEVEL = "warn"
+      }
+      
+      secrets = {
+        TEST_SECRET = {
+          plaintext = "prod-secret-value"
+        }
+        API_KEY = {
+          plaintext = "prod-api-key-67890"
+        }
+      }
+    }
+  ]
 }
 
 # ---------------------------------------------------------------------------------------------------------------------

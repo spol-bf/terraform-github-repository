@@ -542,6 +542,12 @@ variable "vulnerability_alerts" {
   default     = null
 }
 
+variable "web_commit_signoff_required" {
+  type        = bool
+  description = "(Optional) Require contributors to sign off on commits to repositories within the organization."
+  default     = null
+}
+
 variable "archive_on_destroy" {
   type        = string
   description = "(Optional) Set to `false` to not archive the repository instead of deleting on destroy."

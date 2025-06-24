@@ -37,6 +37,7 @@ locals {
   issue_labels_merge_with_github_labels = local.gh_labels
   # Per default, GitHub activates vulnerability  alerts for public repositories and disables it for private repositories
   vulnerability_alerts = var.vulnerability_alerts != null ? var.vulnerability_alerts : local.private ? false : true
+  web_commit_signoff_required = var.web_commit_signoff_required == null ? lookup(var.defaults, "web_commit_signoff_required", null) : var.web_commit_signoff_required
 }
 
 locals {
@@ -111,6 +112,7 @@ resource "github_repository" "repository" {
 
   archive_on_destroy   = var.archive_on_destroy
   vulnerability_alerts = local.vulnerability_alerts
+  web_commit_signoff_required = local.web_commit_signoff_required
 
   dynamic "template" {
     for_each = local.template
@@ -139,6 +141,7 @@ resource "github_repository" "repository" {
       license_template,
       gitignore_template,
       template,
+      web_commit_signoff_required, # Ignored when enforced at org level
     ]
   }
 }

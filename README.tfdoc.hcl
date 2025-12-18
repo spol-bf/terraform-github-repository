@@ -1167,16 +1167,26 @@ section {
 
             attribute "required_code_scanning" {
               type        = object(ruleset_required_code_scanning)
-              description = "Code scanning alerts thresholds."
+              description = "Require code scanning results."
 
-              attribute "alerts_threshold" {
-                type        = string
-                description = "Minimum alert severity to block."
-              }
+              attribute "required_code_scanning_tool" {
+                type        = list(any)
+                description = "At least one tool is required."
 
-              attribute "rule_severities" {
-                type        = list(string)
-                description = "Specific severities that block (e.g., critical, high)."
+                attribute "tool" {
+                  type        = string
+                  description = "Identifier of the code scanning tool."
+                }
+
+                attribute "alerts_threshold" {
+                  type        = string
+                  description = "Minimum alert severity to block."
+                }
+
+                attribute "security_alerts_threshold" {
+                  type        = string
+                  description = "Minimum security alert severity to block."
+                }
               }
             }
 
@@ -1305,33 +1315,43 @@ section {
               }
             }
 
-            attribute "file_path_restrictions" {
-              type        = object(ruleset_file_path_restrictions)
-              description = "Restrictions by path or extension."
+            attribute "file_path_restriction" {
+              type        = object(ruleset_file_path_restriction)
+              description = "Restrict files by path patterns."
 
-              attribute "include" {
+              attribute "restricted_file_paths" {
                 type        = list(string)
-                description = "Paths included."
+                description = "List of restricted file path patterns."
               }
+            }
 
-              attribute "exclude" {
+            attribute "file_extension_restriction" {
+              type        = object(ruleset_file_extension_restriction)
+              description = "Restrict files by extension."
+
+              attribute "restricted_file_extensions" {
                 type        = list(string)
-                description = "Paths excluded."
+                description = "List of restricted file extensions."
               }
+            }
 
-              attribute "max_path_length" {
+            attribute "max_file_path_length" {
+              type        = object(ruleset_max_file_path_length)
+              description = "Set maximum file path length."
+
+              attribute "max_file_path_length" {
                 type        = number
                 description = "Maximum path length."
               }
+            }
+
+            attribute "max_file_size" {
+              type        = object(ruleset_max_file_size)
+              description = "Set maximum file size."
 
               attribute "max_file_size" {
                 type        = number
-                description = "Maximum file size (bytes)."
-              }
-
-              attribute "file_extension_restrictions" {
-                type        = list(string)
-                description = "Allowed extensions."
+                description = "Maximum file size in bytes."
               }
             }
 
@@ -1344,14 +1364,24 @@ section {
                 description = "Timeout for checks in minutes."
               }
 
-              attribute "group_id" {
+              attribute "grouping_strategy" {
                 type        = string
-                description = "Queue group identifier."
+                description = "Grouping strategy for queue entries."
               }
 
               attribute "max_entries_to_build" {
                 type        = number
                 description = "Max queue entries to build."
+              }
+
+              attribute "max_entries_to_merge" {
+                type        = number
+                description = "Max queue entries to merge."
+              }
+
+              attribute "merge_method" {
+                type        = string
+                description = "Merge method used by queue."
               }
 
               attribute "min_entries_to_merge" {
@@ -1362,16 +1392,6 @@ section {
               attribute "min_entries_to_merge_wait_minutes" {
                 type        = number
                 description = "Wait time before merging minimal entries."
-              }
-
-              attribute "queue_entry_allowed_wait_minutes" {
-                type        = number
-                description = "Max wait per queue entry."
-              }
-
-              attribute "queue_entry_retry_interval_minutes" {
-                type        = number
-                description = "Retry interval for queue entry."
               }
             }
           }

@@ -923,17 +923,27 @@ This is due to some terraform limitation and we will update the module once terr
 
     - [**`required_code_scanning`**](#attr-rulesets-rules-required_code_scanning): *(Optional `object(ruleset_required_code_scanning)`)*<a name="attr-rulesets-rules-required_code_scanning"></a>
 
-      Code scanning alerts thresholds.
+      Require code scanning results.
 
       The `ruleset_required_code_scanning` object accepts the following attributes:
 
-      - [**`alerts_threshold`**](#attr-rulesets-rules-required_code_scanning-alerts_threshold): *(Optional `string`)*<a name="attr-rulesets-rules-required_code_scanning-alerts_threshold"></a>
+      - [**`required_code_scanning_tool`**](#attr-rulesets-rules-required_code_scanning-required_code_scanning_tool): *(Optional `list(object)`)*<a name="attr-rulesets-rules-required_code_scanning-required_code_scanning_tool"></a>
 
-        Minimum alert severity to block.
+        At least one tool is required.
 
-      - [**`rule_severities`**](#attr-rulesets-rules-required_code_scanning-rule_severities): *(Optional `list(string)`)*<a name="attr-rulesets-rules-required_code_scanning-rule_severities"></a>
+        Each `` object in the list accepts the following attributes:
 
-        Specific severities that block (e.g., critical, high).
+        - [**`tool`**](#attr-rulesets-rules-required_code_scanning-required_code_scanning_tool-tool): *(Optional `string`)*<a name="attr-rulesets-rules-required_code_scanning-required_code_scanning_tool-tool"></a>
+
+          Identifier of the code scanning tool.
+
+        - [**`alerts_threshold`**](#attr-rulesets-rules-required_code_scanning-required_code_scanning_tool-alerts_threshold): *(Optional `string`)*<a name="attr-rulesets-rules-required_code_scanning-required_code_scanning_tool-alerts_threshold"></a>
+
+          Minimum alert severity to block.
+
+        - [**`security_alerts_threshold`**](#attr-rulesets-rules-required_code_scanning-required_code_scanning_tool-security_alerts_threshold): *(Optional `string`)*<a name="attr-rulesets-rules-required_code_scanning-required_code_scanning_tool-security_alerts_threshold"></a>
+
+          Minimum security alert severity to block.
 
     - [**`commit_message_pattern`**](#attr-rulesets-rules-commit_message_pattern): *(Optional `object(ruleset_commit_message_pattern)`)*<a name="attr-rulesets-rules-commit_message_pattern"></a>
 
@@ -1045,31 +1055,45 @@ This is due to some terraform limitation and we will update the module once terr
 
         Invert the match to block matching tag names.
 
-    - [**`file_path_restrictions`**](#attr-rulesets-rules-file_path_restrictions): *(Optional `object(ruleset_file_path_restrictions)`)*<a name="attr-rulesets-rules-file_path_restrictions"></a>
+    - [**`file_path_restriction`**](#attr-rulesets-rules-file_path_restriction): *(Optional `object(ruleset_file_path_restriction)`)*<a name="attr-rulesets-rules-file_path_restriction"></a>
 
-      Restrictions by path or extension.
+      Restrict files by path patterns.
 
-      The `ruleset_file_path_restrictions` object accepts the following attributes:
+      The `ruleset_file_path_restriction` object accepts the following attributes:
 
-      - [**`include`**](#attr-rulesets-rules-file_path_restrictions-include): *(Optional `list(string)`)*<a name="attr-rulesets-rules-file_path_restrictions-include"></a>
+      - [**`restricted_file_paths`**](#attr-rulesets-rules-file_path_restriction-restricted_file_paths): *(Optional `list(string)`)*<a name="attr-rulesets-rules-file_path_restriction-restricted_file_paths"></a>
 
-        Paths included.
+        List of restricted file path patterns.
 
-      - [**`exclude`**](#attr-rulesets-rules-file_path_restrictions-exclude): *(Optional `list(string)`)*<a name="attr-rulesets-rules-file_path_restrictions-exclude"></a>
+    - [**`file_extension_restriction`**](#attr-rulesets-rules-file_extension_restriction): *(Optional `object(ruleset_file_extension_restriction)`)*<a name="attr-rulesets-rules-file_extension_restriction"></a>
 
-        Paths excluded.
+      Restrict files by extension.
 
-      - [**`max_path_length`**](#attr-rulesets-rules-file_path_restrictions-max_path_length): *(Optional `number`)*<a name="attr-rulesets-rules-file_path_restrictions-max_path_length"></a>
+      The `ruleset_file_extension_restriction` object accepts the following attributes:
+
+      - [**`restricted_file_extensions`**](#attr-rulesets-rules-file_extension_restriction-restricted_file_extensions): *(Optional `list(string)`)*<a name="attr-rulesets-rules-file_extension_restriction-restricted_file_extensions"></a>
+
+        List of restricted file extensions.
+
+    - [**`max_file_path_length`**](#attr-rulesets-rules-max_file_path_length): *(Optional `object(ruleset_max_file_path_length)`)*<a name="attr-rulesets-rules-max_file_path_length"></a>
+
+      Set maximum file path length.
+
+      The `ruleset_max_file_path_length` object accepts the following attributes:
+
+      - [**`max_file_path_length`**](#attr-rulesets-rules-max_file_path_length-max_file_path_length): *(Optional `number`)*<a name="attr-rulesets-rules-max_file_path_length-max_file_path_length"></a>
 
         Maximum path length.
 
-      - [**`max_file_size`**](#attr-rulesets-rules-file_path_restrictions-max_file_size): *(Optional `number`)*<a name="attr-rulesets-rules-file_path_restrictions-max_file_size"></a>
+    - [**`max_file_size`**](#attr-rulesets-rules-max_file_size): *(Optional `object(ruleset_max_file_size)`)*<a name="attr-rulesets-rules-max_file_size"></a>
 
-        Maximum file size (bytes).
+      Set maximum file size.
 
-      - [**`file_extension_restrictions`**](#attr-rulesets-rules-file_path_restrictions-file_extension_restrictions): *(Optional `list(string)`)*<a name="attr-rulesets-rules-file_path_restrictions-file_extension_restrictions"></a>
+      The `ruleset_max_file_size` object accepts the following attributes:
 
-        Allowed extensions.
+      - [**`max_file_size`**](#attr-rulesets-rules-max_file_size-max_file_size): *(Optional `number`)*<a name="attr-rulesets-rules-max_file_size-max_file_size"></a>
+
+        Maximum file size in bytes.
 
     - [**`merge_queue`**](#attr-rulesets-rules-merge_queue): *(Optional `object(ruleset_merge_queue)`)*<a name="attr-rulesets-rules-merge_queue"></a>
 
@@ -1081,13 +1105,21 @@ This is due to some terraform limitation and we will update the module once terr
 
         Timeout for checks in minutes.
 
-      - [**`group_id`**](#attr-rulesets-rules-merge_queue-group_id): *(Optional `string`)*<a name="attr-rulesets-rules-merge_queue-group_id"></a>
+      - [**`grouping_strategy`**](#attr-rulesets-rules-merge_queue-grouping_strategy): *(Optional `string`)*<a name="attr-rulesets-rules-merge_queue-grouping_strategy"></a>
 
-        Queue group identifier.
+        Grouping strategy for queue entries.
 
       - [**`max_entries_to_build`**](#attr-rulesets-rules-merge_queue-max_entries_to_build): *(Optional `number`)*<a name="attr-rulesets-rules-merge_queue-max_entries_to_build"></a>
 
         Max queue entries to build.
+
+      - [**`max_entries_to_merge`**](#attr-rulesets-rules-merge_queue-max_entries_to_merge): *(Optional `number`)*<a name="attr-rulesets-rules-merge_queue-max_entries_to_merge"></a>
+
+        Max queue entries to merge.
+
+      - [**`merge_method`**](#attr-rulesets-rules-merge_queue-merge_method): *(Optional `string`)*<a name="attr-rulesets-rules-merge_queue-merge_method"></a>
+
+        Merge method used by queue.
 
       - [**`min_entries_to_merge`**](#attr-rulesets-rules-merge_queue-min_entries_to_merge): *(Optional `number`)*<a name="attr-rulesets-rules-merge_queue-min_entries_to_merge"></a>
 
@@ -1096,14 +1128,6 @@ This is due to some terraform limitation and we will update the module once terr
       - [**`min_entries_to_merge_wait_minutes`**](#attr-rulesets-rules-merge_queue-min_entries_to_merge_wait_minutes): *(Optional `number`)*<a name="attr-rulesets-rules-merge_queue-min_entries_to_merge_wait_minutes"></a>
 
         Wait time before merging minimal entries.
-
-      - [**`queue_entry_allowed_wait_minutes`**](#attr-rulesets-rules-merge_queue-queue_entry_allowed_wait_minutes): *(Optional `number`)*<a name="attr-rulesets-rules-merge_queue-queue_entry_allowed_wait_minutes"></a>
-
-        Max wait per queue entry.
-
-      - [**`queue_entry_retry_interval_minutes`**](#attr-rulesets-rules-merge_queue-queue_entry_retry_interval_minutes): *(Optional `number`)*<a name="attr-rulesets-rules-merge_queue-queue_entry_retry_interval_minutes"></a>
-
-        Retry interval for queue entry.
 
 #### Issue Labels Configuration
 

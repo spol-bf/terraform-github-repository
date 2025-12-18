@@ -419,8 +419,15 @@ resource "github_repository_ruleset" "ruleset" {
       for_each = try(each.value.rules.required_code_scanning, null) != null ? [each.value.rules.required_code_scanning] : []
 
       content {
-        alerts_threshold = try(required_code_scanning.value.alerts_threshold, null)
-        rule_severities  = try(required_code_scanning.value.rule_severities, null)
+        dynamic "required_code_scanning_tool" {
+          for_each = try(required_code_scanning.value.required_code_scanning_tool, [])
+
+          content {
+            tool                      = try(required_code_scanning_tool.value.tool, null)
+            alerts_threshold          = try(required_code_scanning_tool.value.alerts_threshold, null)
+            security_alerts_threshold = try(required_code_scanning_tool.value.security_alerts_threshold, null)
+          }
+        }
       }
     }
 
@@ -446,15 +453,35 @@ resource "github_repository_ruleset" "ruleset" {
       }
     }
 
-    dynamic "file_path_restrictions" {
-      for_each = try(each.value.rules.file_path_restrictions, null) != null ? [each.value.rules.file_path_restrictions] : []
+    dynamic "file_path_restriction" {
+      for_each = try(each.value.rules.file_path_restriction, null) != null ? [each.value.rules.file_path_restriction] : []
 
       content {
-        include                     = try(file_path_restrictions.value.include, [])
-        exclude                     = try(file_path_restrictions.value.exclude, [])
-        max_path_length             = try(file_path_restrictions.value.max_path_length, null)
-        max_file_size               = try(file_path_restrictions.value.max_file_size, null)
-        file_extension_restrictions = try(file_path_restrictions.value.file_extension_restrictions, [])
+        restricted_file_paths = try(file_path_restriction.value.restricted_file_paths, [])
+      }
+    }
+
+    dynamic "file_extension_restriction" {
+      for_each = try(each.value.rules.file_extension_restriction, null) != null ? [each.value.rules.file_extension_restriction] : []
+
+      content {
+        restricted_file_extensions = try(file_extension_restriction.value.restricted_file_extensions, [])
+      }
+    }
+
+    dynamic "max_file_path_length" {
+      for_each = try(each.value.rules.max_file_path_length, null) != null ? [each.value.rules.max_file_path_length] : []
+
+      content {
+        max_file_path_length = try(max_file_path_length.value.max_file_path_length, null)
+      }
+    }
+
+    dynamic "max_file_size" {
+      for_each = try(each.value.rules.max_file_size, null) != null ? [each.value.rules.max_file_size] : []
+
+      content {
+        max_file_size = try(max_file_size.value.max_file_size, null)
       }
     }
 
@@ -462,13 +489,13 @@ resource "github_repository_ruleset" "ruleset" {
       for_each = try(each.value.rules.merge_queue, null) != null ? [each.value.rules.merge_queue] : []
 
       content {
-        check_response_timeout_minutes     = try(merge_queue.value.check_response_timeout_minutes, null)
-        group_id                           = try(merge_queue.value.group_id, null)
-        max_entries_to_build               = try(merge_queue.value.max_entries_to_build, null)
-        min_entries_to_merge               = try(merge_queue.value.min_entries_to_merge, null)
-        min_entries_to_merge_wait_minutes  = try(merge_queue.value.min_entries_to_merge_wait_minutes, null)
-        queue_entry_allowed_wait_minutes   = try(merge_queue.value.queue_entry_allowed_wait_minutes, null)
-        queue_entry_retry_interval_minutes = try(merge_queue.value.queue_entry_retry_interval_minutes, null)
+        check_response_timeout_minutes    = try(merge_queue.value.check_response_timeout_minutes, null)
+        grouping_strategy                 = try(merge_queue.value.grouping_strategy, null)
+        max_entries_to_build              = try(merge_queue.value.max_entries_to_build, null)
+        max_entries_to_merge              = try(merge_queue.value.max_entries_to_merge, null)
+        merge_method                      = try(merge_queue.value.merge_method, null)
+        min_entries_to_merge              = try(merge_queue.value.min_entries_to_merge, null)
+        min_entries_to_merge_wait_minutes = try(merge_queue.value.min_entries_to_merge_wait_minutes, null)
       }
     }
   }

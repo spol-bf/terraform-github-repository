@@ -338,10 +338,45 @@ resource "github_repository_ruleset" "ruleset" {
   rules {
     creation                = try(each.value.rules.creation, false)
     update                  = try(each.value.rules.update, false)
+    update_allows_fetch_and_merge = try(each.value.rules.update_allows_fetch_and_merge, null)
     deletion                = try(each.value.rules.deletion, false)
     required_linear_history = try(each.value.rules.required_linear_history, false)
     required_signatures     = try(each.value.rules.required_signatures, false)
     non_fast_forward        = try(each.value.rules.non_fast_forward, false)
+
+    dynamic "branch_name_pattern" {
+      for_each = try(each.value.rules.branch_name_pattern, null) != null ? [each.value.rules.branch_name_pattern] : []
+
+      content {
+        operator = branch_name_pattern.value.operator
+        pattern  = branch_name_pattern.value.pattern
+        name     = try(branch_name_pattern.value.name, null)
+        negate   = try(branch_name_pattern.value.negate, null)
+      }
+    }
+
+    dynamic "tag_name_pattern" {
+      for_each = try(each.value.rules.tag_name_pattern, null) != null ? [each.value.rules.tag_name_pattern] : []
+
+      content {
+        operator = tag_name_pattern.value.operator
+        pattern  = tag_name_pattern.value.pattern
+        name     = try(tag_name_pattern.value.name, null)
+        negate   = try(tag_name_pattern.value.negate, null)
+      }
+    }
+
+    dynamic "commit_author_email_pattern" {
+      for_each = try(each.value.rules.commit_author_email_pattern, null) != null ? [each.value.rules.commit_author_email_pattern] : []
+
+      content {
+        operator = commit_author_email_pattern.value.operator
+        pattern  = commit_author_email_pattern.value.pattern
+        name     = try(commit_author_email_pattern.value.name, null)
+        negate   = try(commit_author_email_pattern.value.negate, null)
+      }
+    }
+
     dynamic "required_status_checks" {
       for_each = try(each.value.rules.required_status_checks, null) != null ? [each.value.rules.required_status_checks] : []
 
@@ -357,6 +392,14 @@ resource "github_repository_ruleset" "ruleset" {
             integration_id = try(required_check.value.integration_id, null)
           }
         }
+      }
+    }
+
+    dynamic "required_deployments" {
+      for_each = try(each.value.rules.required_deployments, null) != null ? [each.value.rules.required_deployments] : []
+
+      content {
+        required_deployment_environments = try(required_deployments.value.required_deployment_environments, [])
       }
     }
 
@@ -381,6 +424,28 @@ resource "github_repository_ruleset" "ruleset" {
       }
     }
 
+    dynamic "commit_message_pattern" {
+      for_each = try(each.value.rules.commit_message_pattern, null) != null ? [each.value.rules.commit_message_pattern] : []
+
+      content {
+        operator = commit_message_pattern.value.operator
+        pattern  = commit_message_pattern.value.pattern
+        name     = try(commit_message_pattern.value.name, null)
+        negate   = try(commit_message_pattern.value.negate, null)
+      }
+    }
+
+    dynamic "committer_email_pattern" {
+      for_each = try(each.value.rules.committer_email_pattern, null) != null ? [each.value.rules.committer_email_pattern] : []
+
+      content {
+        operator = committer_email_pattern.value.operator
+        pattern  = committer_email_pattern.value.pattern
+        name     = try(committer_email_pattern.value.name, null)
+        negate   = try(committer_email_pattern.value.negate, null)
+      }
+    }
+
     dynamic "file_path_restrictions" {
       for_each = try(each.value.rules.file_path_restrictions, null) != null ? [each.value.rules.file_path_restrictions] : []
 
@@ -390,6 +455,20 @@ resource "github_repository_ruleset" "ruleset" {
         max_path_length             = try(file_path_restrictions.value.max_path_length, null)
         max_file_size               = try(file_path_restrictions.value.max_file_size, null)
         file_extension_restrictions = try(file_path_restrictions.value.file_extension_restrictions, [])
+      }
+    }
+
+    dynamic "merge_queue" {
+      for_each = try(each.value.rules.merge_queue, null) != null ? [each.value.rules.merge_queue] : []
+
+      content {
+        check_response_timeout_minutes     = try(merge_queue.value.check_response_timeout_minutes, null)
+        group_id                           = try(merge_queue.value.group_id, null)
+        max_entries_to_build               = try(merge_queue.value.max_entries_to_build, null)
+        min_entries_to_merge               = try(merge_queue.value.min_entries_to_merge, null)
+        min_entries_to_merge_wait_minutes  = try(merge_queue.value.min_entries_to_merge_wait_minutes, null)
+        queue_entry_allowed_wait_minutes   = try(merge_queue.value.queue_entry_allowed_wait_minutes, null)
+        queue_entry_retry_interval_minutes = try(merge_queue.value.queue_entry_retry_interval_minutes, null)
       }
     }
   }

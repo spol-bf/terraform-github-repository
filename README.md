@@ -10,7 +10,7 @@
 
 A [Terraform] module for creating a public or private repository on [Github].
 
-**_This module supports Terraform v1.x and is compatible with the Official Terraform GitHub Provider v6.7 to v6.x from `integrations/github`._**
+**_This module supports Terraform v1.x and is compatible with the Official Terraform GitHub Provider v6.7 and above from `integrations/github`._**
 
 **Attention: This module is incompatible with the Hashicorp GitHub Provider! The latest version of this module supporting `hashicorp/github` provider is `~> 0.10.0`**
 
@@ -36,7 +36,6 @@ A [Terraform] module for creating a public or private repository on [Github].
     - [Webhooks Configuration](#webhooks-configuration)
     - [Secrets Configuration](#secrets-configuration)
     - [Autolink References Configuration](#autolink-references-configuration)
-    - [Environments Configuration](#environments-configuration)
     - [App Installations](#app-installations)
   - [Module Configuration](#module-configuration)
 - [Module Outputs](#module-outputs)
@@ -93,8 +92,7 @@ features like Branch Protection or Collaborator Management.
   Teams,
   Deploy Keys,
   Projects,
-  Repository Webhooks,
-  GitHub Environments
+  Repository Webhooks
 
 - _Features not yet implemented_:
   Project Columns support,
@@ -757,7 +755,11 @@ This is due to some terraform limitation and we will update the module once terr
 
 - [**`rulesets`**](#var-rulesets): *(Optional `list(ruleset)`)*<a name="var-rulesets"></a>
 
-  Repository-level rulesets applied to this repository.
+  Configure repository-level rulesets (GitHub rulesets API). Each element represents one ruleset applied to this repository.
+  Requires a token with repository administration rights (or GitHub App with equivalent permissions).
+  Existing rulesets can be imported with `terraform import github_repository_ruleset.ruleset["00-my-ruleset"] <repo_name>:<ruleset_id>`.
+
+  Default is `[]`.
 
   Each `ruleset` object in the list accepts the following attributes:
 
@@ -767,25 +769,341 @@ This is due to some terraform limitation and we will update the module once terr
 
   - [**`target`**](#attr-rulesets-target): *(Optional `string`)*<a name="attr-rulesets-target"></a>
 
-    Scope of the ruleset, `branch` or `tag`. Defaults to `branch`.
+    Scope of the ruleset: `branch` or `tag`.
+
+    Default is `"branch"`.
 
   - [**`enforcement`**](#attr-rulesets-enforcement): *(Optional `string`)*<a name="attr-rulesets-enforcement"></a>
 
-    `active` or `evaluate`. Defaults to `active`.
+    Enforcement mode, either `active` or `evaluate`.
 
-  - [**`conditions`**](#attr-rulesets-conditions): *(Optional `object`)*<a name="attr-rulesets-conditions"></a>
+    Default is `"active"`.
 
-    `ref_name` include/exclude patterns; defaults to include `~DEFAULT_BRANCH`.
+  - [**`conditions`**](#attr-rulesets-conditions): *(Optional `object(ruleset_conditions)`)*<a name="attr-rulesets-conditions"></a>
+
+    Target refs to which the ruleset applies (supports `~DEFAULT_BRANCH` and glob-style patterns).
+
+    Default is `{"ref_name":{"exclude":[],"include":["~DEFAULT_BRANCH"]}}`.
+
+    The `ruleset_conditions` object accepts the following attributes:
+
+    - [**`ref_name`**](#attr-rulesets-conditions-ref_name): *(Optional `object(ruleset_ref_name)`)*<a name="attr-rulesets-conditions-ref_name"></a>
+
+      Reference name filters.
+
+      The `ruleset_ref_name` object accepts the following attributes:
+
+      - [**`include`**](#attr-rulesets-conditions-ref_name-include): *(Optional `list(string)`)*<a name="attr-rulesets-conditions-ref_name-include"></a>
+
+        Refs included by the ruleset (supports glob and ~DEFAULT_BRANCH).
+
+        Default is `["~DEFAULT_BRANCH"]`.
+
+      - [**`exclude`**](#attr-rulesets-conditions-ref_name-exclude): *(Optional `list(string)`)*<a name="attr-rulesets-conditions-ref_name-exclude"></a>
+
+        Refs excluded from the ruleset.
+
+        Default is `[]`.
 
   - [**`bypass_actors`**](#attr-rulesets-bypass_actors): *(Optional `list(object)`)*<a name="attr-rulesets-bypass_actors"></a>
 
-    Actors allowed to bypass (Integration, Team, User, OrganizationAdmin, RepositoryRole) with `actor_id` and `bypass_mode` (`always` or `pull_request`).
+    Optional list of actors allowed to bypass the ruleset. `actor_type` can be Integration, Team, User, OrganizationAdmin, or RepositoryRole. `bypass_mode` is usually `always` or `pull_request`.
 
-  - [**`rules`**](#attr-rulesets-rules): *(Optional `object`)*<a name="attr-rulesets-rules"></a>
+    Each `` object in the list accepts the following attributes:
 
-    Flags and nested configs such as `creation`, `update`, `deletion`, `required_linear_history`, `required_signatures`, `non_fast_forward`, `required_status_checks` (with `required_check` contexts, optional `integration_id`, `strict_required_status_checks_policy`, `do_not_enforce_on_create`), `pull_request` (review requirements), `required_code_scanning`, and `file_path_restrictions` (include/exclude and optional limits).
+    - [**`actor_type`**](#attr-rulesets-bypass_actors-actor_type): *(Optional `string`)*<a name="attr-rulesets-bypass_actors-actor_type"></a>
 
-  Default is `[]`.
+      Integration, Team, User, OrganizationAdmin, or RepositoryRole.
+
+    - [**`actor_id`**](#attr-rulesets-bypass_actors-actor_id): *(Optional `number`)*<a name="attr-rulesets-bypass_actors-actor_id"></a>
+
+      Numeric ID of the actor (team/integration/user id).
+
+    - [**`bypass_mode`**](#attr-rulesets-bypass_actors-bypass_mode): *(Optional `string`)*<a name="attr-rulesets-bypass_actors-bypass_mode"></a>
+
+      Typically `always` or `pull_request`.
+
+  - [**`rules`**](#attr-rulesets-rules): *(Optional `object(ruleset_rules)`)*<a name="attr-rulesets-rules"></a>
+
+    Set of rules enforced by the ruleset. Unspecified flags default to `false`; nested blocks are optional.
+
+    The `ruleset_rules` object accepts the following attributes:
+
+    - [**`creation`**](#attr-rulesets-rules-creation): *(Optional `bool`)*<a name="attr-rulesets-rules-creation"></a>
+
+      Block repository creations that match the conditions.
+
+    - [**`update`**](#attr-rulesets-rules-update): *(Optional `bool`)*<a name="attr-rulesets-rules-update"></a>
+
+      Block direct updates on matching refs.
+
+    - [**`update_allows_fetch_and_merge`**](#attr-rulesets-rules-update_allows_fetch_and_merge): *(Optional `bool`)*<a name="attr-rulesets-rules-update_allows_fetch_and_merge"></a>
+
+      Allow fetch + merge when update is blocked.
+
+    - [**`deletion`**](#attr-rulesets-rules-deletion): *(Optional `bool`)*<a name="attr-rulesets-rules-deletion"></a>
+
+      Prevent deletions on matching refs.
+
+    - [**`required_linear_history`**](#attr-rulesets-rules-required_linear_history): *(Optional `bool`)*<a name="attr-rulesets-rules-required_linear_history"></a>
+
+      Enforce linear history.
+
+    - [**`required_signatures`**](#attr-rulesets-rules-required_signatures): *(Optional `bool`)*<a name="attr-rulesets-rules-required_signatures"></a>
+
+      Require signed commits.
+
+    - [**`non_fast_forward`**](#attr-rulesets-rules-non_fast_forward): *(Optional `bool`)*<a name="attr-rulesets-rules-non_fast_forward"></a>
+
+      Disallow force-pushes.
+
+    - [**`required_status_checks`**](#attr-rulesets-rules-required_status_checks): *(Optional `object(ruleset_required_status_checks)`)*<a name="attr-rulesets-rules-required_status_checks"></a>
+
+      Status checks required before merge.
+
+      The `ruleset_required_status_checks` object accepts the following attributes:
+
+      - [**`strict_required_status_checks_policy`**](#attr-rulesets-rules-required_status_checks-strict_required_status_checks_policy): *(Optional `bool`)*<a name="attr-rulesets-rules-required_status_checks-strict_required_status_checks_policy"></a>
+
+        Require branches up to date before merge.
+
+      - [**`do_not_enforce_on_create`**](#attr-rulesets-rules-required_status_checks-do_not_enforce_on_create): *(Optional `bool`)*<a name="attr-rulesets-rules-required_status_checks-do_not_enforce_on_create"></a>
+
+        Skip enforcement on repository creation.
+
+      - [**`required_check`**](#attr-rulesets-rules-required_status_checks-required_check): *(Optional `list(object)`)*<a name="attr-rulesets-rules-required_status_checks-required_check"></a>
+
+        List of required checks (context/integration_id).
+
+        Each `` object in the list accepts the following attributes:
+
+        - [**`context`**](#attr-rulesets-rules-required_status_checks-required_check-context): *(Optional `string`)*<a name="attr-rulesets-rules-required_status_checks-required_check-context"></a>
+
+          Status check context name.
+
+        - [**`integration_id`**](#attr-rulesets-rules-required_status_checks-required_check-integration_id): *(Optional `number`)*<a name="attr-rulesets-rules-required_status_checks-required_check-integration_id"></a>
+
+          Integration ID for the check (if applicable).
+
+    - [**`required_deployments`**](#attr-rulesets-rules-required_deployments): *(Optional `object(ruleset_required_deployments)`)*<a name="attr-rulesets-rules-required_deployments"></a>
+
+      Deployment environments that must succeed.
+
+      The `ruleset_required_deployments` object accepts the following attributes:
+
+      - [**`required_deployment_environments`**](#attr-rulesets-rules-required_deployments-required_deployment_environments): *(Optional `list(string)`)*<a name="attr-rulesets-rules-required_deployments-required_deployment_environments"></a>
+
+        Environment names required before merging.
+
+    - [**`pull_request`**](#attr-rulesets-rules-pull_request): *(Optional `object(ruleset_pull_request)`)*<a name="attr-rulesets-rules-pull_request"></a>
+
+      Pull request review requirements.
+
+      The `ruleset_pull_request` object accepts the following attributes:
+
+      - [**`dismiss_stale_reviews_on_push`**](#attr-rulesets-rules-pull_request-dismiss_stale_reviews_on_push): *(Optional `bool`)*<a name="attr-rulesets-rules-pull_request-dismiss_stale_reviews_on_push"></a>
+
+        Dismiss reviews when new commits are pushed.
+
+      - [**`require_code_owner_review`**](#attr-rulesets-rules-pull_request-require_code_owner_review): *(Optional `bool`)*<a name="attr-rulesets-rules-pull_request-require_code_owner_review"></a>
+
+        Require code owner approval.
+
+      - [**`require_last_push_approval`**](#attr-rulesets-rules-pull_request-require_last_push_approval): *(Optional `bool`)*<a name="attr-rulesets-rules-pull_request-require_last_push_approval"></a>
+
+        Require approval from someone other than last pusher.
+
+      - [**`required_approving_review_count`**](#attr-rulesets-rules-pull_request-required_approving_review_count): *(Optional `number`)*<a name="attr-rulesets-rules-pull_request-required_approving_review_count"></a>
+
+        Number of required approvals.
+
+      - [**`required_review_thread_resolution`**](#attr-rulesets-rules-pull_request-required_review_thread_resolution): *(Optional `bool`)*<a name="attr-rulesets-rules-pull_request-required_review_thread_resolution"></a>
+
+        Require all review threads resolved.
+
+    - [**`required_code_scanning`**](#attr-rulesets-rules-required_code_scanning): *(Optional `object(ruleset_required_code_scanning)`)*<a name="attr-rulesets-rules-required_code_scanning"></a>
+
+      Code scanning alerts thresholds.
+
+      The `ruleset_required_code_scanning` object accepts the following attributes:
+
+      - [**`alerts_threshold`**](#attr-rulesets-rules-required_code_scanning-alerts_threshold): *(Optional `string`)*<a name="attr-rulesets-rules-required_code_scanning-alerts_threshold"></a>
+
+        Minimum alert severity to block.
+
+      - [**`rule_severities`**](#attr-rulesets-rules-required_code_scanning-rule_severities): *(Optional `list(string)`)*<a name="attr-rulesets-rules-required_code_scanning-rule_severities"></a>
+
+        Specific severities that block (e.g., critical, high).
+
+    - [**`commit_message_pattern`**](#attr-rulesets-rules-commit_message_pattern): *(Optional `object(ruleset_commit_message_pattern)`)*<a name="attr-rulesets-rules-commit_message_pattern"></a>
+
+      Regex enforcement for commit messages.
+
+      The `ruleset_commit_message_pattern` object accepts the following attributes:
+
+      - [**`operator`**](#attr-rulesets-rules-commit_message_pattern-operator): *(Optional `string`)*<a name="attr-rulesets-rules-commit_message_pattern-operator"></a>
+
+        Currently only `regex` is supported.
+
+      - [**`pattern`**](#attr-rulesets-rules-commit_message_pattern-pattern): *(Optional `string`)*<a name="attr-rulesets-rules-commit_message_pattern-pattern"></a>
+
+        Regular expression applied to commit messages.
+
+      - [**`name`**](#attr-rulesets-rules-commit_message_pattern-name): *(Optional `string`)*<a name="attr-rulesets-rules-commit_message_pattern-name"></a>
+
+        Display name for the rule (optional).
+
+      - [**`negate`**](#attr-rulesets-rules-commit_message_pattern-negate): *(Optional `bool`)*<a name="attr-rulesets-rules-commit_message_pattern-negate"></a>
+
+        Invert the match to block matching messages.
+
+    - [**`commit_author_email_pattern`**](#attr-rulesets-rules-commit_author_email_pattern): *(Optional `object(ruleset_commit_author_email_pattern)`)*<a name="attr-rulesets-rules-commit_author_email_pattern"></a>
+
+      Regex enforcement for commit author email.
+
+      The `ruleset_commit_author_email_pattern` object accepts the following attributes:
+
+      - [**`operator`**](#attr-rulesets-rules-commit_author_email_pattern-operator): *(Optional `string`)*<a name="attr-rulesets-rules-commit_author_email_pattern-operator"></a>
+
+        Currently only `regex` is supported.
+
+      - [**`pattern`**](#attr-rulesets-rules-commit_author_email_pattern-pattern): *(Optional `string`)*<a name="attr-rulesets-rules-commit_author_email_pattern-pattern"></a>
+
+        Regular expression applied to author emails.
+
+      - [**`name`**](#attr-rulesets-rules-commit_author_email_pattern-name): *(Optional `string`)*<a name="attr-rulesets-rules-commit_author_email_pattern-name"></a>
+
+        Display name for the rule (optional).
+
+      - [**`negate`**](#attr-rulesets-rules-commit_author_email_pattern-negate): *(Optional `bool`)*<a name="attr-rulesets-rules-commit_author_email_pattern-negate"></a>
+
+        Invert the match to block matching emails.
+
+    - [**`committer_email_pattern`**](#attr-rulesets-rules-committer_email_pattern): *(Optional `object(ruleset_committer_email_pattern)`)*<a name="attr-rulesets-rules-committer_email_pattern"></a>
+
+      Regex enforcement for committer email.
+
+      The `ruleset_committer_email_pattern` object accepts the following attributes:
+
+      - [**`operator`**](#attr-rulesets-rules-committer_email_pattern-operator): *(Optional `string`)*<a name="attr-rulesets-rules-committer_email_pattern-operator"></a>
+
+        Currently only `regex` is supported.
+
+      - [**`pattern`**](#attr-rulesets-rules-committer_email_pattern-pattern): *(Optional `string`)*<a name="attr-rulesets-rules-committer_email_pattern-pattern"></a>
+
+        Regular expression applied to committer emails.
+
+      - [**`name`**](#attr-rulesets-rules-committer_email_pattern-name): *(Optional `string`)*<a name="attr-rulesets-rules-committer_email_pattern-name"></a>
+
+        Display name for the rule (optional).
+
+      - [**`negate`**](#attr-rulesets-rules-committer_email_pattern-negate): *(Optional `bool`)*<a name="attr-rulesets-rules-committer_email_pattern-negate"></a>
+
+        Invert the match to block matching emails.
+
+    - [**`branch_name_pattern`**](#attr-rulesets-rules-branch_name_pattern): *(Optional `object(ruleset_branch_name_pattern)`)*<a name="attr-rulesets-rules-branch_name_pattern"></a>
+
+      Regex enforcement for branch names.
+
+      The `ruleset_branch_name_pattern` object accepts the following attributes:
+
+      - [**`operator`**](#attr-rulesets-rules-branch_name_pattern-operator): *(Optional `string`)*<a name="attr-rulesets-rules-branch_name_pattern-operator"></a>
+
+        Currently only `regex` is supported.
+
+      - [**`pattern`**](#attr-rulesets-rules-branch_name_pattern-pattern): *(Optional `string`)*<a name="attr-rulesets-rules-branch_name_pattern-pattern"></a>
+
+        Regular expression applied to branch names.
+
+      - [**`name`**](#attr-rulesets-rules-branch_name_pattern-name): *(Optional `string`)*<a name="attr-rulesets-rules-branch_name_pattern-name"></a>
+
+        Display name for the rule (optional).
+
+      - [**`negate`**](#attr-rulesets-rules-branch_name_pattern-negate): *(Optional `bool`)*<a name="attr-rulesets-rules-branch_name_pattern-negate"></a>
+
+        Invert the match to block matching branch names.
+
+    - [**`tag_name_pattern`**](#attr-rulesets-rules-tag_name_pattern): *(Optional `object(ruleset_tag_name_pattern)`)*<a name="attr-rulesets-rules-tag_name_pattern"></a>
+
+      Regex enforcement for tag names.
+
+      The `ruleset_tag_name_pattern` object accepts the following attributes:
+
+      - [**`operator`**](#attr-rulesets-rules-tag_name_pattern-operator): *(Optional `string`)*<a name="attr-rulesets-rules-tag_name_pattern-operator"></a>
+
+        Currently only `regex` is supported.
+
+      - [**`pattern`**](#attr-rulesets-rules-tag_name_pattern-pattern): *(Optional `string`)*<a name="attr-rulesets-rules-tag_name_pattern-pattern"></a>
+
+        Regular expression applied to tag names.
+
+      - [**`name`**](#attr-rulesets-rules-tag_name_pattern-name): *(Optional `string`)*<a name="attr-rulesets-rules-tag_name_pattern-name"></a>
+
+        Display name for the rule (optional).
+
+      - [**`negate`**](#attr-rulesets-rules-tag_name_pattern-negate): *(Optional `bool`)*<a name="attr-rulesets-rules-tag_name_pattern-negate"></a>
+
+        Invert the match to block matching tag names.
+
+    - [**`file_path_restrictions`**](#attr-rulesets-rules-file_path_restrictions): *(Optional `object(ruleset_file_path_restrictions)`)*<a name="attr-rulesets-rules-file_path_restrictions"></a>
+
+      Restrictions by path or extension.
+
+      The `ruleset_file_path_restrictions` object accepts the following attributes:
+
+      - [**`include`**](#attr-rulesets-rules-file_path_restrictions-include): *(Optional `list(string)`)*<a name="attr-rulesets-rules-file_path_restrictions-include"></a>
+
+        Paths included.
+
+      - [**`exclude`**](#attr-rulesets-rules-file_path_restrictions-exclude): *(Optional `list(string)`)*<a name="attr-rulesets-rules-file_path_restrictions-exclude"></a>
+
+        Paths excluded.
+
+      - [**`max_path_length`**](#attr-rulesets-rules-file_path_restrictions-max_path_length): *(Optional `number`)*<a name="attr-rulesets-rules-file_path_restrictions-max_path_length"></a>
+
+        Maximum path length.
+
+      - [**`max_file_size`**](#attr-rulesets-rules-file_path_restrictions-max_file_size): *(Optional `number`)*<a name="attr-rulesets-rules-file_path_restrictions-max_file_size"></a>
+
+        Maximum file size (bytes).
+
+      - [**`file_extension_restrictions`**](#attr-rulesets-rules-file_path_restrictions-file_extension_restrictions): *(Optional `list(string)`)*<a name="attr-rulesets-rules-file_path_restrictions-file_extension_restrictions"></a>
+
+        Allowed extensions.
+
+    - [**`merge_queue`**](#attr-rulesets-rules-merge_queue): *(Optional `object(ruleset_merge_queue)`)*<a name="attr-rulesets-rules-merge_queue"></a>
+
+      Merge queue settings.
+
+      The `ruleset_merge_queue` object accepts the following attributes:
+
+      - [**`check_response_timeout_minutes`**](#attr-rulesets-rules-merge_queue-check_response_timeout_minutes): *(Optional `number`)*<a name="attr-rulesets-rules-merge_queue-check_response_timeout_minutes"></a>
+
+        Timeout for checks in minutes.
+
+      - [**`group_id`**](#attr-rulesets-rules-merge_queue-group_id): *(Optional `string`)*<a name="attr-rulesets-rules-merge_queue-group_id"></a>
+
+        Queue group identifier.
+
+      - [**`max_entries_to_build`**](#attr-rulesets-rules-merge_queue-max_entries_to_build): *(Optional `number`)*<a name="attr-rulesets-rules-merge_queue-max_entries_to_build"></a>
+
+        Max queue entries to build.
+
+      - [**`min_entries_to_merge`**](#attr-rulesets-rules-merge_queue-min_entries_to_merge): *(Optional `number`)*<a name="attr-rulesets-rules-merge_queue-min_entries_to_merge"></a>
+
+        Min queue entries before merging.
+
+      - [**`min_entries_to_merge_wait_minutes`**](#attr-rulesets-rules-merge_queue-min_entries_to_merge_wait_minutes): *(Optional `number`)*<a name="attr-rulesets-rules-merge_queue-min_entries_to_merge_wait_minutes"></a>
+
+        Wait time before merging minimal entries.
+
+      - [**`queue_entry_allowed_wait_minutes`**](#attr-rulesets-rules-merge_queue-queue_entry_allowed_wait_minutes): *(Optional `number`)*<a name="attr-rulesets-rules-merge_queue-queue_entry_allowed_wait_minutes"></a>
+
+        Max wait per queue entry.
+
+      - [**`queue_entry_retry_interval_minutes`**](#attr-rulesets-rules-merge_queue-queue_entry_retry_interval_minutes): *(Optional `number`)*<a name="attr-rulesets-rules-merge_queue-queue_entry_retry_interval_minutes"></a>
+
+        Retry interval for queue entry.
 
 #### Issue Labels Configuration
 
@@ -961,143 +1279,6 @@ This is due to some terraform limitation and we will update the module once terr
 
     The template of the target URL used for the links; must be a valid URL and contain `<num>` for the reference number.
 
-#### Environments Configuration
-
-- [**`environments`**](#var-environments): *(Optional `list(environment)`)*<a name="var-environments"></a>
-
-  This resource allows you to create and manage deployment environments for GitHub repository.
-  Environments provide deployment protection rules and secrets for your repository.
-
-  Default is `[]`.
-
-  Each `environment` object in the list accepts the following attributes:
-
-  - [**`name`**](#attr-environments-name): *(**Required** `string`)*<a name="attr-environments-name"></a>
-
-    The name of the environment.
-
-  - [**`wait_timer`**](#attr-environments-wait_timer): *(Optional `number`)*<a name="attr-environments-wait_timer"></a>
-
-    The amount of time to delay a job after the job is initially triggered. The time (in minutes) must be an integer between 0 and 43,200 (30 days).
-
-    Default is `null`.
-
-  - [**`can_admins_bypass`**](#attr-environments-can_admins_bypass): *(Optional `bool`)*<a name="attr-environments-can_admins_bypass"></a>
-
-    Whether or not a user who is an administrator of the repository can bypass the configured protection rules for this environment.
-
-    Default is `true`.
-
-
-
-  - [**`reviewers`**](#attr-environments-reviewers): *(Optional `object(reviewers)`)*<a name="attr-environments-reviewers"></a>
-
-    The list of environment reviewers.
-
-    Default is `{}`.
-
-    The `reviewers` object accepts the following attributes:
-
-    - [**`teams`**](#attr-environments-reviewers-teams): *(Optional `list(string)`)*<a name="attr-environments-reviewers-teams"></a>
-
-      The list of team slugs that may review jobs that reference the environment. Teams must already have access to the repository.
-
-      Default is `[]`.
-
-    - [**`users`**](#attr-environments-reviewers-users): *(Optional `list(string)`)*<a name="attr-environments-reviewers-users"></a>
-
-      The list of user logins that may review jobs that reference the environment.
-
-      Default is `[]`.
-
-  - [**`deployment_branch_policy`**](#attr-environments-deployment_branch_policy): *(Optional `object(deployment_branch_policy)`)*<a name="attr-environments-deployment_branch_policy"></a>
-
-    The deployment branch policy for the environment.
-
-    Default is `{}`.
-
-    The `deployment_branch_policy` object accepts the following attributes:
-
-    - [**`protected_branches`**](#attr-environments-deployment_branch_policy-protected_branches): *(Optional `bool`)*<a name="attr-environments-deployment_branch_policy-protected_branches"></a>
-
-      Whether only branches with branch protection rules can deploy to this environment.
-
-      Default is `false`.
-
-    - [**`custom_branch_policies`**](#attr-environments-deployment_branch_policy-custom_branch_policies): *(Optional `bool`)*<a name="attr-environments-deployment_branch_policy-custom_branch_policies"></a>
-
-      Whether only branches that match the specified name patterns can deploy to this environment.
-
-      Default is `false`.
-
-  - [**`branch_patterns`**](#attr-environments-branch_patterns): *(Optional `list(string)`)*<a name="attr-environments-branch_patterns"></a>
-
-    The list of branch name patterns that can deploy to this environment. Required when `custom_branch_policies` is `true`.
-
-    Default is `[]`.
-
-  - [**`secrets`**](#attr-environments-secrets): *(Optional `map(object(secret))`)*<a name="attr-environments-secrets"></a>
-
-    A map of secrets for the environment.
-
-    Default is `{}`.
-
-    Each `secret` object accepts the following attributes:
-
-    - [**`plaintext`**](#attr-environments-secrets-plaintext): *(Optional `string`)*<a name="attr-environments-secrets-plaintext"></a>
-
-      The plaintext value of the secret.
-
-    - [**`encrypted`**](#attr-environments-secrets-encrypted): *(Optional `string`)*<a name="attr-environments-secrets-encrypted"></a>
-
-      The encrypted value of the secret using the GitHub public key in Base64 format.
-
-  - [**`variables`**](#attr-environments-variables): *(Optional `map(string)`)*<a name="attr-environments-variables"></a>
-
-    A map of variables for the environment.
-
-    Default is `{}`.
-
-  Example:
-
-  ```hcl
-  environments = [
-    {
-      name = "development"
-      deployment_branch_policy = {
-        custom_branch_policies = true
-      }
-      branch_patterns = ["develop", "feature/*"]
-      variables = {
-        API_URL = "https://dev-api.example.com"
-        DEBUG   = "true"
-      }
-      secrets = {
-        DATABASE_URL = { plaintext = "postgres://dev-db:5432/myapp" }
-      }
-    },
-    {
-      name = "production"
-      wait_timer = 300
-      can_admins_bypass = false
-      reviewers = {
-        teams = ["platform-team"]
-        users = ["deployment-manager"]
-      }
-      deployment_branch_policy = {
-        protected_branches = true
-      }
-      variables = {
-        API_URL = "https://api.example.com"
-        DEBUG   = "false"
-      }
-      secrets = {
-        DATABASE_URL = { plaintext = "postgres://prod-db:5432/myapp" }
-      }
-    }
-  ]
-  ```
-
 #### App Installations
 
 - [**`app_installations`**](#var-app_installations): *(Optional `set(string)`)*<a name="var-app_installations"></a>
@@ -1112,7 +1293,7 @@ This is due to some terraform limitation and we will update the module once terr
   app_installations = ["05405144", "12556423"]
   ```
 
-## Module Configuration
+### Module Configuration
 
 - [**`module_depends_on`**](#var-module_depends_on): *(Optional `list(dependency)`)*<a name="var-module_depends_on"></a>
 
@@ -1141,7 +1322,7 @@ The following attributes are exported by the module:
 
 - [**`ruleset_ids`**](#output-ruleset_ids): *(`map(string)`)*<a name="output-ruleset_ids"></a>
 
-  Map of repository ruleset IDs keyed by the ruleset key used in this module.
+  Map of repository ruleset IDs keyed by the ruleset key used in the module.
 
 - [**`full_name`**](#output-full_name): *(`string`)*<a name="output-full_name"></a>
 
@@ -1197,22 +1378,6 @@ The following attributes are exported by the module:
 - [**`app_installations`**](#output-app_installations): *(`set(number)`)*<a name="output-app_installations"></a>
 
   A map of deploy app installations keyed by installation id.
-
-- [**`environments`**](#output-environments): *(`object(environment)`)*<a name="output-environments"></a>
-
-  A map of environment objects keyed by environment name.
-
-- [**`environment_secrets`**](#output-environment_secrets): *(`object(environment_secret)`)*<a name="output-environment_secrets"></a>
-
-  A map of environment secrets keyed by environment:secret_name.
-
-- [**`environment_variables`**](#output-environment_variables): *(`object(environment_variable)`)*<a name="output-environment_variables"></a>
-
-  A map of environment variables keyed by environment:variable_name.
-
-- [**`deployment_policies`**](#output-deployment_policies): *(`object(deployment_policy)`)*<a name="output-deployment_policies"></a>
-
-  A map of deployment policies keyed by environment:pattern.
 
 ## External Documentation
 

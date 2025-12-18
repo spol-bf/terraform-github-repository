@@ -413,6 +413,80 @@ variable "rulesets" {
     ])
     error_message = "Ruleset target must be either \"branch\" or \"tag\"."
   }
+
+  validation {
+    condition = alltrue([
+      for r in var.rulesets :
+      contains(["active", "evaluate"], try(r.enforcement, "active"))
+    ])
+    error_message = "Ruleset enforcement must be either \"active\" or \"evaluate\"."
+  }
+
+  validation {
+    condition = alltrue([
+      for r in var.rulesets :
+      alltrue([
+        for actor in try(r.bypass_actors, []) :
+        contains(["Integration", "Team", "User", "OrganizationAdmin", "RepositoryRole"], try(actor.actor_type, ""))
+      ])
+    ])
+    error_message = "Each bypass_actors.actor_type must be Integration, Team, User, OrganizationAdmin, or RepositoryRole."
+  }
+
+  validation {
+    condition = alltrue([
+      for r in var.rulesets :
+      try(r.rules.commit_message_pattern == null, true) || (
+        contains(["regex"], r.rules.commit_message_pattern.operator) &&
+        length(try(r.rules.commit_message_pattern.pattern, "")) > 0
+      )
+    ])
+    error_message = "rules.commit_message_pattern requires operator \"regex\" and a non-empty pattern."
+  }
+
+  validation {
+    condition = alltrue([
+      for r in var.rulesets :
+      try(r.rules.branch_name_pattern == null, true) || (
+        contains(["regex"], r.rules.branch_name_pattern.operator) &&
+        length(try(r.rules.branch_name_pattern.pattern, "")) > 0
+      )
+    ])
+    error_message = "rules.branch_name_pattern requires operator \"regex\" and a non-empty pattern."
+  }
+
+  validation {
+    condition = alltrue([
+      for r in var.rulesets :
+      try(r.rules.tag_name_pattern == null, true) || (
+        contains(["regex"], r.rules.tag_name_pattern.operator) &&
+        length(try(r.rules.tag_name_pattern.pattern, "")) > 0
+      )
+    ])
+    error_message = "rules.tag_name_pattern requires operator \"regex\" and a non-empty pattern."
+  }
+
+  validation {
+    condition = alltrue([
+      for r in var.rulesets :
+      try(r.rules.commit_author_email_pattern == null, true) || (
+        contains(["regex"], r.rules.commit_author_email_pattern.operator) &&
+        length(try(r.rules.commit_author_email_pattern.pattern, "")) > 0
+      )
+    ])
+    error_message = "rules.commit_author_email_pattern requires operator \"regex\" and a non-empty pattern."
+  }
+
+  validation {
+    condition = alltrue([
+      for r in var.rulesets :
+      try(r.rules.committer_email_pattern == null, true) || (
+        contains(["regex"], r.rules.committer_email_pattern.operator) &&
+        length(try(r.rules.committer_email_pattern.pattern, "")) > 0
+      )
+    ])
+    error_message = "rules.committer_email_pattern requires operator \"regex\" and a non-empty pattern."
+  }
 }
 
 variable "issue_labels_merge_with_github_labels" {

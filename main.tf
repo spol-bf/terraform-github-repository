@@ -36,7 +36,7 @@ locals {
 
   issue_labels_merge_with_github_labels = local.gh_labels
   # Per default, GitHub activates vulnerability  alerts for public repositories and disables it for private repositories
-  vulnerability_alerts = var.vulnerability_alerts != null ? var.vulnerability_alerts : local.private ? false : true
+  vulnerability_alerts        = var.vulnerability_alerts != null ? var.vulnerability_alerts : local.private ? false : true
   web_commit_signoff_required = var.web_commit_signoff_required == null ? lookup(var.defaults, "web_commit_signoff_required", null) : var.web_commit_signoff_required
 }
 
@@ -85,6 +85,23 @@ locals {
   ]
 }
 
+locals {
+  rulesets = [
+    for idx, rs in var.rulesets : merge({
+      target                   = "branch"
+      enforcement              = "active"
+      conditions               = {}
+      bypass_actors            = []
+      rules                    = {}
+      do_not_enforce_on_create = null
+    }, rs)
+  ]
+
+  rulesets_map = {
+    for idx, rs in local.rulesets : format("%02d-%s", idx, rs.name) => rs
+  }
+}
+
 # ---------------------------------------------------------------------------------------------------------------------
 # Create the repository
 # ---------------------------------------------------------------------------------------------------------------------
@@ -110,8 +127,8 @@ resource "github_repository" "repository" {
   archived               = var.archived
   topics                 = local.topics
 
-  archive_on_destroy   = var.archive_on_destroy
-  vulnerability_alerts = local.vulnerability_alerts
+  archive_on_destroy          = var.archive_on_destroy
+  vulnerability_alerts        = local.vulnerability_alerts
   web_commit_signoff_required = local.web_commit_signoff_required
 
   dynamic "template" {
@@ -284,6 +301,96 @@ resource "github_branch_protection_v3" "branch_protection" {
       users = restrictions.value.users
       teams = [for t in restrictions.value.teams : replace(lower(t), "/[^a-z0-9_]/", "-")]
       apps  = restrictions.value.apps
+    }
+  }
+}
+
+# ---------------------------------------------------------------------------------------------------------------------
+# Repository Rulesets
+# https://registry.terraform.io/providers/integrations/github/latest/docs/resources/repository_ruleset
+# ---------------------------------------------------------------------------------------------------------------------
+
+resource "github_repository_ruleset" "ruleset" {
+  for_each = local.rulesets_map
+
+  name        = each.value.name
+  target      = each.value.target
+  enforcement = each.value.enforcement
+  repository  = github_repository.repository.name
+
+  conditions {
+    ref_name {
+      include = try(each.value.conditions.ref_name.include, ["~DEFAULT_BRANCH"])
+      exclude = try(each.value.conditions.ref_name.exclude, [])
+    }
+  }
+
+  dynamic "bypass_actors" {
+    for_each = try(each.value.bypass_actors, [])
+
+    content {
+      actor_id    = try(bypass_actors.value.actor_id, null)
+      actor_type  = bypass_actors.value.actor_type
+      bypass_mode = try(bypass_actors.value.bypass_mode, "always")
+    }
+  }
+
+  rules {
+    creation                = try(each.value.rules.creation, false)
+    update                  = try(each.value.rules.update, false)
+    deletion                = try(each.value.rules.deletion, false)
+    required_linear_history = try(each.value.rules.required_linear_history, false)
+    required_signatures     = try(each.value.rules.required_signatures, false)
+    non_fast_forward        = try(each.value.rules.non_fast_forward, false)
+    dynamic "required_status_checks" {
+      for_each = try(each.value.rules.required_status_checks, null) != null ? [each.value.rules.required_status_checks] : []
+
+      content {
+        do_not_enforce_on_create             = try(required_status_checks.value.do_not_enforce_on_create, null)
+        strict_required_status_checks_policy = try(required_status_checks.value.strict_required_status_checks_policy, null)
+
+        dynamic "required_check" {
+          for_each = try(required_status_checks.value.required_check, [])
+
+          content {
+            context        = required_check.value.context
+            integration_id = try(required_check.value.integration_id, null)
+          }
+        }
+      }
+    }
+
+    dynamic "pull_request" {
+      for_each = try(each.value.rules.pull_request, null) != null ? [each.value.rules.pull_request] : []
+
+      content {
+        dismiss_stale_reviews_on_push     = try(pull_request.value.dismiss_stale_reviews_on_push, null)
+        require_code_owner_review         = try(pull_request.value.require_code_owner_review, null)
+        require_last_push_approval        = try(pull_request.value.require_last_push_approval, null)
+        required_approving_review_count   = try(pull_request.value.required_approving_review_count, null)
+        required_review_thread_resolution = try(pull_request.value.required_review_thread_resolution, null)
+      }
+    }
+
+    dynamic "required_code_scanning" {
+      for_each = try(each.value.rules.required_code_scanning, null) != null ? [each.value.rules.required_code_scanning] : []
+
+      content {
+        alerts_threshold = try(required_code_scanning.value.alerts_threshold, null)
+        rule_severities  = try(required_code_scanning.value.rule_severities, null)
+      }
+    }
+
+    dynamic "file_path_restrictions" {
+      for_each = try(each.value.rules.file_path_restrictions, null) != null ? [each.value.rules.file_path_restrictions] : []
+
+      content {
+        include                     = try(file_path_restrictions.value.include, [])
+        exclude                     = try(file_path_restrictions.value.exclude, [])
+        max_path_length             = try(file_path_restrictions.value.max_path_length, null)
+        max_file_size               = try(file_path_restrictions.value.max_file_size, null)
+        file_extension_restrictions = try(file_path_restrictions.value.file_extension_restrictions, [])
+      }
     }
   }
 }

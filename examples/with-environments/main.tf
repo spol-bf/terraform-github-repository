@@ -43,18 +43,18 @@ module "repository" {
   environments = [
     {
       name = "development"
-      
+
       # Development environment - less restrictive
-      wait_timer          = 0
-      can_admins_bypass   = true
-      
+      wait_timer        = 0
+      can_admins_bypass = true
+
       # Allow deployments from develop and feature branches
       deployment_branch_policy = {
         protected_branches     = false
         custom_branch_policies = true
       }
       branch_patterns = ["develop", "feature/*"]
-      
+
       # Development environment variables
       variables = {
         API_URL     = "https://dev-api.example.com"
@@ -62,7 +62,7 @@ module "repository" {
         LOG_LEVEL   = "debug"
         ENVIRONMENT = "development"
       }
-      
+
       # Development secrets
       secrets = {
         DATABASE_URL = {
@@ -73,27 +73,27 @@ module "repository" {
         }
       }
     },
-    
+
     {
       name = "staging"
-      
+
       # Staging environment - moderate restrictions
-      wait_timer          = 60  # 1 minute wait
-      can_admins_bypass   = true
-      
+      wait_timer        = 60 # 1 minute wait
+      can_admins_bypass = true
+
       # Require review for staging deployments
       reviewers = {
         teams = ["developers"]
         users = []
       }
-      
+
       # Allow deployments from staging and main branches
       deployment_branch_policy = {
         protected_branches     = false
         custom_branch_policies = true
       }
       branch_patterns = ["staging", "main"]
-      
+
       # Staging environment variables
       variables = {
         API_URL     = "https://staging-api.example.com"
@@ -101,7 +101,7 @@ module "repository" {
         LOG_LEVEL   = "info"
         ENVIRONMENT = "staging"
       }
-      
+
       # Staging secrets (using encrypted values in real scenarios)
       secrets = {
         DATABASE_URL = {
@@ -112,26 +112,26 @@ module "repository" {
         }
       }
     },
-    
+
     {
       name = "production"
-      
+
       # Production environment - strict restrictions
-      wait_timer          = 300  # 5 minutes wait
-      can_admins_bypass   = false
-      
+      wait_timer        = 300 # 5 minutes wait
+      can_admins_bypass = false
+
       # Require multiple reviewers for production
       reviewers = {
         teams = ["platform-team", "security-team"]
         users = ["deployment-manager"]
       }
-      
+
       # Only allow deployments from protected branches (main)
       deployment_branch_policy = {
         protected_branches     = true
         custom_branch_policies = false
       }
-      
+
       # Production environment variables
       variables = {
         API_URL     = "https://api.example.com"
@@ -139,7 +139,7 @@ module "repository" {
         LOG_LEVEL   = "warn"
         ENVIRONMENT = "production"
       }
-      
+
       # Production secrets (in real scenarios, these would be encrypted)
       secrets = {
         DATABASE_URL = {
@@ -164,12 +164,12 @@ module "repository" {
       allows_force_pushes             = false
       blocks_creations                = false
       push_restrictions               = []
-      
+
       required_status_checks = {
         strict   = true
         contexts = ["ci/tests", "ci/security-scan"]
       }
-      
+
       required_pull_request_reviews = {
         dismiss_stale_reviews           = true
         restrict_dismissals             = false

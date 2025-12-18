@@ -3,18 +3,18 @@
 [![Build Status](https://github.com/mineiros-io/terraform-github-repository/workflows/CI/CD%20Pipeline/badge.svg)](https://github.com/mineiros-io/terraform-github-repository/actions)
 [![GitHub tag (latest SemVer)](https://img.shields.io/github/v/tag/mineiros-io/terraform-github-repository.svg?label=latest&sort=semver)](https://github.com/mineiros-io/terraform-github-repository/releases)
 [![Terraform Version](https://img.shields.io/badge/terraform-1.x-623CE4.svg?logo=terraform)](https://github.com/hashicorp/terraform/releases)
-[![Github Provider Version](https://img.shields.io/badge/GH-4.20+-F8991D.svg?logo=terraform)](https://github.com/integrations/terraform-provider-github/releases)
+[![Github Provider Version](https://img.shields.io/badge/GH-6.7+-F8991D.svg?logo=terraform)](https://github.com/integrations/terraform-provider-github/releases)
 [![Join Slack](https://img.shields.io/badge/slack-@mineiros--community-f32752.svg?logo=slack)](https://join.slack.com/t/mineiros-community/shared_invite/zt-ehidestg-aLGoIENLVs6tvwJ11w9WGg)
 
 # terraform-github-repository
 
 A [Terraform] module for creating a public or private repository on [Github].
 
-**_This module supports Terraform v1.x and is compatible with the Official Terraform GitHub Provider v4.20 to v6.x from `integrations/github`._**
+**_This module supports Terraform v1.x and is compatible with the Official Terraform GitHub Provider v6.7 to v6.x from `integrations/github`._**
 
 **Attention: This module is incompatible with the Hashicorp GitHub Provider! The latest version of this module supporting `hashicorp/github` provider is `~> 0.10.0`**
 
-** Note: This module now supports the latest GitHub provider versions (up to v6.x). For the most stable experience, use provider version 6.0 or later.**
+** Note: This module now supports the latest GitHub provider versions (up to v6.x). For rulesets support and the most stable experience, use provider version 6.7 or later.**
 
 
 - [GitHub as Code](#github-as-code)
@@ -30,6 +30,7 @@ A [Terraform] module for creating a public or private repository on [Github].
     - [Deploy Keys Configuration](#deploy-keys-configuration)
     - [Branch Protections v3 Configuration](#branch-protections-v3-configuration)
     - [Branch Protections v4 Configuration](#branch-protections-v4-configuration)
+    - [Rulesets Configuration](#rulesets-configuration)
     - [Issue Labels Configuration](#issue-labels-configuration)
     - [Projects Configuration](#projects-configuration)
     - [Webhooks Configuration](#webhooks-configuration)
@@ -85,6 +86,7 @@ features like Branch Protection or Collaborator Management.
 - **Extended Repository Features**:
   Branches,
   Branch Protection,
+  Repository Rulesets,
   Issue Labels,
   Handle Github Default Issue Labels,
   Collaborators,
@@ -751,6 +753,40 @@ This is due to some terraform limitation and we will update the module once terr
 
       Default is `[]`.
 
+#### Rulesets Configuration
+
+- [**`rulesets`**](#var-rulesets): *(Optional `list(ruleset)`)*<a name="var-rulesets"></a>
+
+  Repository-level rulesets applied to this repository.
+
+  Each `ruleset` object in the list accepts the following attributes:
+
+  - [**`name`**](#attr-rulesets-name): *(**Required** `string`)*<a name="attr-rulesets-name"></a>
+
+    Display name of the ruleset.
+
+  - [**`target`**](#attr-rulesets-target): *(Optional `string`)*<a name="attr-rulesets-target"></a>
+
+    Scope of the ruleset, `branch` or `tag`. Defaults to `branch`.
+
+  - [**`enforcement`**](#attr-rulesets-enforcement): *(Optional `string`)*<a name="attr-rulesets-enforcement"></a>
+
+    `active` or `evaluate`. Defaults to `active`.
+
+  - [**`conditions`**](#attr-rulesets-conditions): *(Optional `object`)*<a name="attr-rulesets-conditions"></a>
+
+    `ref_name` include/exclude patterns; defaults to include `~DEFAULT_BRANCH`.
+
+  - [**`bypass_actors`**](#attr-rulesets-bypass_actors): *(Optional `list(object)`)*<a name="attr-rulesets-bypass_actors"></a>
+
+    Actors allowed to bypass (Integration, Team, User, OrganizationAdmin, RepositoryRole) with `actor_id` and `bypass_mode` (`always` or `pull_request`).
+
+  - [**`rules`**](#attr-rulesets-rules): *(Optional `object`)*<a name="attr-rulesets-rules"></a>
+
+    Flags and nested configs such as `creation`, `update`, `deletion`, `required_linear_history`, `required_signatures`, `non_fast_forward`, `required_status_checks` (with `required_check` contexts, optional `integration_id`, `strict_required_status_checks_policy`, `do_not_enforce_on_create`), `pull_request` (review requirements), `required_code_scanning`, and `file_path_restrictions` (include/exclude and optional limits).
+
+  Default is `[]`.
+
 #### Issue Labels Configuration
 
 - [**`issue_labels`**](#var-issue_labels): *(Optional `list(issue_label)`)*<a name="var-issue_labels"></a>
@@ -1103,6 +1139,10 @@ The following attributes are exported by the module:
   resource containing all arguments as specified above and the other
   attributes as specified below.
 
+- [**`ruleset_ids`**](#output-ruleset_ids): *(`map(string)`)*<a name="output-ruleset_ids"></a>
+
+  Map of repository ruleset IDs keyed by the ruleset key used in this module.
+
 - [**`full_name`**](#output-full_name): *(`string`)*<a name="output-full_name"></a>
 
   A string of the form "orgname/reponame".
@@ -1256,7 +1296,7 @@ Copyright &copy; 2020-2022 [Mineiros GmbH][homepage]
 [badge-license]: https://img.shields.io/badge/license-Apache%202.0-brightgreen.svg
 [badge-terraform]: https://img.shields.io/badge/terraform-1.x-623CE4.svg?logo=terraform
 [badge-slack]: https://img.shields.io/badge/slack-@mineiros--community-f32752.svg?logo=slack
-[badge-tf-gh]: https://img.shields.io/badge/GH-4.20+-F8991D.svg?logo=terraform
+[badge-tf-gh]: https://img.shields.io/badge/GH-6.7+-F8991D.svg?logo=terraform
 [releases-github-provider]: https://github.com/integrations/terraform-provider-github/releases
 [build-status]: https://github.com/mineiros-io/terraform-github-repository/actions
 [releases-github]: https://github.com/mineiros-io/terraform-github-repository/releases

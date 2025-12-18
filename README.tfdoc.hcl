@@ -21,7 +21,7 @@ header {
   }
 
   badge "tf-gh" {
-    image = "https://img.shields.io/badge/GH-4.20+-F8991D.svg?logo=terraform"
+    image = "https://img.shields.io/badge/GH-6.7+-F8991D.svg?logo=terraform"
     url   = "https://github.com/integrations/terraform-provider-github/releases"
     text  = "Github Provider Version"
   }
@@ -39,11 +39,11 @@ section {
   content = <<-END
     A [Terraform] module for creating a public or private repository on [Github].
 
-    **_This module supports Terraform v1.x and is compatible with the Official Terraform GitHub Provider v4.20 and above from `integrations/github`._**
+    **_This module supports Terraform v1.x and is compatible with the Official Terraform GitHub Provider v6.7 and above from `integrations/github`._**
 
     **Attention: This module is incompatible with the Hashicorp GitHub Provider! The latest version of this module supporting `hashicorp/github` provider is `~> 0.10.0`**
 
-    ** Note: This module now supports the latest GitHub provider versions (up to v6.x). For the most stable experience, use provider version 6.0 or later.**
+    ** Note: This module now supports the latest GitHub provider versions (up to v6.x). For rulesets support and the most stable experience, use provider version 6.7 or later.**
   END
 
   section {
@@ -86,6 +86,7 @@ section {
       - **Extended Repository Features**:
         Branches,
         Branch Protection,
+        Repository Rulesets,
         Issue Labels,
         Handle Github Default Issue Labels,
         Collaborators,
@@ -971,6 +972,106 @@ section {
       }
 
       section {
+        title = "Rulesets Configuration"
+
+        variable "rulesets" {
+          type        = list(ruleset)
+          default     = []
+          description = <<-END
+            Configure repository-level rulesets (GitHub rulesets API). Each element represents one ruleset applied to this repository.
+          END
+
+          attribute "name" {
+            type        = string
+            required    = true
+            description = <<-END
+              Display name of the ruleset.
+            END
+          }
+
+          attribute "target" {
+            type        = string
+            default     = "branch"
+            description = <<-END
+              Scope of the ruleset: `branch` or `tag`.
+            END
+          }
+
+          attribute "enforcement" {
+            type        = string
+            default     = "active"
+            description = <<-END
+              Enforcement mode, either `active` or `evaluate`.
+            END
+          }
+
+          attribute "conditions" {
+            type        = object({
+              ref_name = object({
+                include = list(string)
+                exclude = list(string)
+              })
+            })
+            default     = { ref_name = { include = ["~DEFAULT_BRANCH"], exclude = [] } }
+            description = <<-END
+              Target refs to which the ruleset applies (supports `~DEFAULT_BRANCH` and glob-style patterns).
+            END
+          }
+
+          attribute "bypass_actors" {
+            type = list(object({
+              actor_type  = string
+              actor_id    = number
+              bypass_mode = string
+            }))
+            description = <<-END
+              Optional list of actors allowed to bypass the ruleset. `actor_type` can be Integration, Team, User, OrganizationAdmin, or RepositoryRole. `bypass_mode` is usually `always` or `pull_request`.
+            END
+          }
+
+          attribute "rules" {
+            type = object({
+              creation                = optional(bool)
+              update                  = optional(bool)
+              deletion                = optional(bool)
+              required_linear_history = optional(bool)
+              required_signatures     = optional(bool)
+              non_fast_forward        = optional(bool)
+              required_status_checks = optional(object({
+                strict_required_status_checks_policy = optional(bool)
+                do_not_enforce_on_create             = optional(bool)
+                required_check = list(object({
+                  context        = string
+                  integration_id = optional(number)
+                }))
+              }))
+              pull_request = optional(object({
+                dismiss_stale_reviews_on_push     = optional(bool)
+                require_code_owner_review         = optional(bool)
+                require_last_push_approval        = optional(bool)
+                required_approving_review_count   = optional(number)
+                required_review_thread_resolution = optional(bool)
+              }))
+              required_code_scanning = optional(object({
+                alerts_threshold = optional(string)
+                rule_severities  = optional(list(string))
+              }))
+              file_path_restrictions = optional(object({
+                include                     = list(string)
+                exclude                     = list(string)
+                max_path_length             = optional(number)
+                max_file_size               = optional(number)
+                file_extension_restrictions = optional(list(string))
+              }))
+            })
+            description = <<-END
+              Set of rules enforced by the ruleset. Unspecified flags default to `false`; nested blocks are optional.
+            END
+          }
+        }
+      }
+
+      section {
         title = "Issue Labels Configuration"
 
         variable "issue_labels" {
@@ -1267,6 +1368,13 @@ section {
       END
     }
 
+    output "ruleset_ids" {
+      type        = map(string)
+      description = <<-END
+        Map of repository ruleset IDs keyed by the ruleset key used in the module.
+      END
+    }
+
     output "full_name" {
       type        = string
       description = <<-END
@@ -1495,7 +1603,7 @@ references {
     value = "https://img.shields.io/badge/slack-@mineiros--community-f32752.svg?logo=slack"
   }
   ref "badge-tf-gh" {
-    value = "https://img.shields.io/badge/GH-4.20+-F8991D.svg?logo=terraform"
+    value = "https://img.shields.io/badge/GH-6.7+-F8991D.svg?logo=terraform"
   }
   ref "releases-github-provider" {
     value = "https://github.com/integrations/terraform-provider-github/releases"

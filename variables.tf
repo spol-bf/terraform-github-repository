@@ -371,6 +371,50 @@ variable "branch_protections_v4" {
   }
 }
 
+variable "rulesets" {
+  description = "(Optional) Repository rulesets to apply to this repository. Default is []."
+  type        = any
+  default     = []
+
+  # Example:
+  # rulesets = [
+  #   {
+  #     name        = "protect-main"
+  #     target      = "branch"
+  #     enforcement = "active"
+  #     conditions = {
+  #       ref_name = {
+  #         include = ["~DEFAULT_BRANCH"]
+  #         exclude = ["refs/heads/chore/*"]
+  #       }
+  #     }
+  #     rules = {
+  #       required_linear_history = true
+  #       required_status_checks = {
+  #         strict_required_status_checks_policy = true
+  #         required_check = [
+  #           { context = "ci/test" }
+  #         ]
+  #       }
+  #       required_signatures = true
+  #     }
+  #   }
+  # ]
+
+  validation {
+    condition     = alltrue([for r in var.rulesets : try(r.name != "", false)])
+    error_message = "Each ruleset must set a non-empty name."
+  }
+
+  validation {
+    condition = alltrue([
+      for r in var.rulesets :
+      contains(["branch", "tag"], try(r.target, "branch"))
+    ])
+    error_message = "Ruleset target must be either \"branch\" or \"tag\"."
+  }
+}
+
 variable "issue_labels_merge_with_github_labels" {
   description = "(Optional) Specify if you want to merge and control githubs default set of issue labels."
   type        = bool

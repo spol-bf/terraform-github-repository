@@ -29,25 +29,29 @@ module "repository" {
     github_team.team
   ]
 
-  name                   = var.name
-  description            = var.description
-  homepage_url           = var.url
-  private                = false
-  has_issues             = var.has_issues
-  has_projects           = var.has_projects
-  has_wiki               = var.has_wiki
-  allow_merge_commit     = var.allow_merge_commit
-  allow_rebase_merge     = var.allow_rebase_merge
-  allow_squash_merge     = var.allow_squash_merge
-  allow_auto_merge       = var.allow_auto_merge
-  delete_branch_on_merge = var.delete_branch_on_merge
-  is_template            = var.is_template
-  has_downloads          = var.has_downloads
-  auto_init              = var.auto_init
-  gitignore_template     = var.gitignore_template
-  license_template       = var.license_template
-  archived               = false
-  topics                 = var.topics
+  name                        = var.name
+  description                 = var.description
+  homepage_url                = var.url
+  private                     = false
+  has_issues                  = var.has_issues
+  has_projects                = var.has_projects
+  has_wiki                    = var.has_wiki
+  allow_merge_commit          = var.allow_merge_commit
+  allow_rebase_merge          = var.allow_rebase_merge
+  allow_squash_merge          = var.allow_squash_merge
+  allow_auto_merge            = var.allow_auto_merge
+  delete_branch_on_merge      = var.delete_branch_on_merge
+  squash_merge_commit_title   = var.squash_merge_commit_title
+  squash_merge_commit_message = var.squash_merge_commit_message
+  merge_commit_title          = var.merge_commit_title
+  merge_commit_message        = var.merge_commit_message
+  is_template                 = var.is_template
+  has_downloads               = var.has_downloads
+  auto_init                   = var.auto_init
+  gitignore_template          = var.gitignore_template
+  license_template            = var.license_template
+  archived                    = false
+  topics                      = var.topics
 
   branches = [
     {

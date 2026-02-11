@@ -217,6 +217,38 @@ section {
         END
       }
 
+      variable "squash_merge_commit_title" {
+        type        = string
+        default     = null
+        description = <<-END
+          Can be `PR_TITLE` or `COMMIT_OR_PR_TITLE` for a default squash merge commit title.
+        END
+      }
+
+      variable "squash_merge_commit_message" {
+        type        = string
+        default     = null
+        description = <<-END
+          Can be `PR_BODY`, `COMMIT_MESSAGES`, or `BLANK` for a default squash merge commit message.
+        END
+      }
+
+      variable "merge_commit_title" {
+        type        = string
+        default     = null
+        description = <<-END
+          Can be `PR_TITLE` or `MERGE_MESSAGE` for a default merge commit title.
+        END
+      }
+
+      variable "merge_commit_message" {
+        type        = string
+        default     = null
+        description = <<-END
+          Can be `PR_TITLE`, `PR_BODY`, or `BLANK` for a default merge commit message.
+        END
+      }
+
       variable "description" {
         type        = string
         default     = ""

@@ -71,6 +71,30 @@ variable "allow_auto_merge" {
 }
 
 
+variable "squash_merge_commit_title" {
+  description = "Default squash merge commit title."
+  type        = string
+  default     = "PR_TITLE"
+}
+
+variable "squash_merge_commit_message" {
+  description = "Default squash merge commit message."
+  type        = string
+  default     = "PR_BODY"
+}
+
+variable "merge_commit_title" {
+  description = "Default merge commit title."
+  type        = string
+  default     = "PR_TITLE"
+}
+
+variable "merge_commit_message" {
+  description = "Default merge commit message."
+  type        = string
+  default     = "PR_BODY"
+}
+
 variable "has_downloads" {
   description = "Set to true to enable the (deprecated) downloads features on the repository."
   type        = bool

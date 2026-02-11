@@ -102,6 +102,30 @@ variable "delete_branch_on_merge" {
   default     = null
 }
 
+variable "squash_merge_commit_title" {
+  description = "(Optional) Can be 'PR_TITLE' or 'COMMIT_OR_PR_TITLE' for a default squash merge commit title. (Default: provider default)"
+  type        = string
+  default     = null
+}
+
+variable "squash_merge_commit_message" {
+  description = "(Optional) Can be 'PR_BODY', 'COMMIT_MESSAGES', or 'BLANK' for a default squash merge commit message. (Default: provider default)"
+  type        = string
+  default     = null
+}
+
+variable "merge_commit_title" {
+  description = "(Optional) Can be 'PR_TITLE' or 'MERGE_MESSAGE' for a default merge commit title. (Default: provider default)"
+  type        = string
+  default     = null
+}
+
+variable "merge_commit_message" {
+  description = "(Optional) Can be 'PR_TITLE', 'PR_BODY', or 'BLANK' for a default merge commit message. (Default: provider default)"
+  type        = string
+  default     = null
+}
+
 variable "has_downloads" {
   description = "(Optional) Set to true to enable the (deprecated) downloads features on the repository. (Default: false)"
   type        = bool

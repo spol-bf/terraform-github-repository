@@ -184,6 +184,30 @@ See [variables.tf] and [examples/] for details and use-cases.
 
   Default is `false`.
 
+- [**`squash_merge_commit_title`**](#var-squash_merge_commit_title): *(Optional `string`)*<a name="var-squash_merge_commit_title"></a>
+
+  Can be `PR_TITLE` or `COMMIT_OR_PR_TITLE` for a default squash merge commit title.
+
+  Default is `null`.
+
+- [**`squash_merge_commit_message`**](#var-squash_merge_commit_message): *(Optional `string`)*<a name="var-squash_merge_commit_message"></a>
+
+  Can be `PR_BODY`, `COMMIT_MESSAGES`, or `BLANK` for a default squash merge commit message.
+
+  Default is `null`.
+
+- [**`merge_commit_title`**](#var-merge_commit_title): *(Optional `string`)*<a name="var-merge_commit_title"></a>
+
+  Can be `PR_TITLE` or `MERGE_MESSAGE` for a default merge commit title.
+
+  Default is `null`.
+
+- [**`merge_commit_message`**](#var-merge_commit_message): *(Optional `string`)*<a name="var-merge_commit_message"></a>
+
+  Can be `PR_TITLE`, `PR_BODY`, or `BLANK` for a default merge commit message.
+
+  Default is `null`.
+
 - [**`description`**](#var-description): *(Optional `string`)*<a name="var-description"></a>
 
   A description of the repository.
@@ -769,19 +793,19 @@ This is due to some terraform limitation and we will update the module once terr
 
   - [**`target`**](#attr-rulesets-target): *(Optional `string`)*<a name="attr-rulesets-target"></a>
 
-    Scope of the ruleset: `branch` or `tag`.
+    Scope of the ruleset: `branch`, `tag`, or `push`.
 
     Default is `"branch"`.
 
   - [**`enforcement`**](#attr-rulesets-enforcement): *(Optional `string`)*<a name="attr-rulesets-enforcement"></a>
 
-    Enforcement mode, either `active` or `evaluate`.
+    Enforcement mode: `disabled`, `active`, or `evaluate`. Note that `evaluate` is only available for organisations with a GitHub Enterprise plan.
 
     Default is `"active"`.
 
   - [**`conditions`**](#attr-rulesets-conditions): *(Optional `object(ruleset_conditions)`)*<a name="attr-rulesets-conditions"></a>
 
-    Target refs to which the ruleset applies (supports `~DEFAULT_BRANCH` and glob-style patterns).
+    Target refs to which the ruleset applies (supports `~DEFAULT_BRANCH` and glob-style patterns). Optional for `push` target rulesets — when omitted, the conditions block is not rendered.
 
     Default is `{"ref_name":{"exclude":[],"include":["~DEFAULT_BRANCH"]}}`.
 
@@ -807,13 +831,13 @@ This is due to some terraform limitation and we will update the module once terr
 
   - [**`bypass_actors`**](#attr-rulesets-bypass_actors): *(Optional `list(object)`)*<a name="attr-rulesets-bypass_actors"></a>
 
-    Optional list of actors allowed to bypass the ruleset. `actor_type` can be Integration, Team, User, OrganizationAdmin, or RepositoryRole. `bypass_mode` is usually `always` or `pull_request`.
+    Optional list of actors allowed to bypass the ruleset. `actor_type` can be Integration, Team, User, OrganizationAdmin, RepositoryRole, or DeployKey. `bypass_mode` is usually `always`, `pull_request`, or `exempt`.
 
     Each `` object in the list accepts the following attributes:
 
     - [**`actor_type`**](#attr-rulesets-bypass_actors-actor_type): *(Optional `string`)*<a name="attr-rulesets-bypass_actors-actor_type"></a>
 
-      Integration, Team, User, OrganizationAdmin, or RepositoryRole.
+      Integration, Team, User, OrganizationAdmin, RepositoryRole, or DeployKey.
 
     - [**`actor_id`**](#attr-rulesets-bypass_actors-actor_id): *(Optional `number`)*<a name="attr-rulesets-bypass_actors-actor_id"></a>
 
@@ -821,7 +845,7 @@ This is due to some terraform limitation and we will update the module once terr
 
     - [**`bypass_mode`**](#attr-rulesets-bypass_actors-bypass_mode): *(Optional `string`)*<a name="attr-rulesets-bypass_actors-bypass_mode"></a>
 
-      Typically `always` or `pull_request`.
+      Typically `always`, `pull_request`, or `exempt`.
 
   - [**`rules`**](#attr-rulesets-rules): *(Optional `object(ruleset_rules)`)*<a name="attr-rulesets-rules"></a>
 
@@ -921,6 +945,38 @@ This is due to some terraform limitation and we will update the module once terr
 
         Require all review threads resolved.
 
+      - [**`allowed_merge_methods`**](#attr-rulesets-rules-pull_request-allowed_merge_methods): *(Optional `list(string)`)*<a name="attr-rulesets-rules-pull_request-allowed_merge_methods"></a>
+
+        Allowed merge methods (e.g. `merge`, `squash`, `rebase`).
+
+      - [**`required_reviewers`**](#attr-rulesets-rules-pull_request-required_reviewers): *(Optional `object(ruleset_required_reviewers)`)*<a name="attr-rulesets-rules-pull_request-required_reviewers"></a>
+
+        Require specific reviewers to approve matching files.
+
+        The `ruleset_required_reviewers` object accepts the following attributes:
+
+        - [**`file_patterns`**](#attr-rulesets-rules-pull_request-required_reviewers-file_patterns): *(Optional `list(string)`)*<a name="attr-rulesets-rules-pull_request-required_reviewers-file_patterns"></a>
+
+          File patterns (fnmatch syntax) that must be approved by the reviewer.
+
+        - [**`minimum_approvals`**](#attr-rulesets-rules-pull_request-required_reviewers-minimum_approvals): *(Optional `number`)*<a name="attr-rulesets-rules-pull_request-required_reviewers-minimum_approvals"></a>
+
+          Minimum number of approvals required (0 for optional).
+
+        - [**`reviewer`**](#attr-rulesets-rules-pull_request-required_reviewers-reviewer): *(Optional `object(ruleset_reviewer)`)*<a name="attr-rulesets-rules-pull_request-required_reviewers-reviewer"></a>
+
+          Reviewer identity.
+
+          The `ruleset_reviewer` object accepts the following attributes:
+
+          - [**`id`**](#attr-rulesets-rules-pull_request-required_reviewers-reviewer-id): *(Optional `number`)*<a name="attr-rulesets-rules-pull_request-required_reviewers-reviewer-id"></a>
+
+            Team ID of the reviewer.
+
+          - [**`type`**](#attr-rulesets-rules-pull_request-required_reviewers-reviewer-type): *(Optional `string`)*<a name="attr-rulesets-rules-pull_request-required_reviewers-reviewer-type"></a>
+
+            Reviewer type, currently only `Team` is supported.
+
     - [**`required_code_scanning`**](#attr-rulesets-rules-required_code_scanning): *(Optional `object(ruleset_required_code_scanning)`)*<a name="attr-rulesets-rules-required_code_scanning"></a>
 
       Require code scanning results.
@@ -947,13 +1003,13 @@ This is due to some terraform limitation and we will update the module once terr
 
     - [**`commit_message_pattern`**](#attr-rulesets-rules-commit_message_pattern): *(Optional `object(ruleset_commit_message_pattern)`)*<a name="attr-rulesets-rules-commit_message_pattern"></a>
 
-      Regex enforcement for commit messages.
+      Pattern enforcement for commit messages.
 
       The `ruleset_commit_message_pattern` object accepts the following attributes:
 
       - [**`operator`**](#attr-rulesets-rules-commit_message_pattern-operator): *(Optional `string`)*<a name="attr-rulesets-rules-commit_message_pattern-operator"></a>
 
-        Currently only `regex` is supported.
+        One of `starts_with`, `ends_with`, `contains`, or `regex`.
 
       - [**`pattern`**](#attr-rulesets-rules-commit_message_pattern-pattern): *(Optional `string`)*<a name="attr-rulesets-rules-commit_message_pattern-pattern"></a>
 
@@ -969,13 +1025,13 @@ This is due to some terraform limitation and we will update the module once terr
 
     - [**`commit_author_email_pattern`**](#attr-rulesets-rules-commit_author_email_pattern): *(Optional `object(ruleset_commit_author_email_pattern)`)*<a name="attr-rulesets-rules-commit_author_email_pattern"></a>
 
-      Regex enforcement for commit author email.
+      Pattern enforcement for commit author email.
 
       The `ruleset_commit_author_email_pattern` object accepts the following attributes:
 
       - [**`operator`**](#attr-rulesets-rules-commit_author_email_pattern-operator): *(Optional `string`)*<a name="attr-rulesets-rules-commit_author_email_pattern-operator"></a>
 
-        Currently only `regex` is supported.
+        One of `starts_with`, `ends_with`, `contains`, or `regex`.
 
       - [**`pattern`**](#attr-rulesets-rules-commit_author_email_pattern-pattern): *(Optional `string`)*<a name="attr-rulesets-rules-commit_author_email_pattern-pattern"></a>
 
@@ -991,13 +1047,13 @@ This is due to some terraform limitation and we will update the module once terr
 
     - [**`committer_email_pattern`**](#attr-rulesets-rules-committer_email_pattern): *(Optional `object(ruleset_committer_email_pattern)`)*<a name="attr-rulesets-rules-committer_email_pattern"></a>
 
-      Regex enforcement for committer email.
+      Pattern enforcement for committer email.
 
       The `ruleset_committer_email_pattern` object accepts the following attributes:
 
       - [**`operator`**](#attr-rulesets-rules-committer_email_pattern-operator): *(Optional `string`)*<a name="attr-rulesets-rules-committer_email_pattern-operator"></a>
 
-        Currently only `regex` is supported.
+        One of `starts_with`, `ends_with`, `contains`, or `regex`.
 
       - [**`pattern`**](#attr-rulesets-rules-committer_email_pattern-pattern): *(Optional `string`)*<a name="attr-rulesets-rules-committer_email_pattern-pattern"></a>
 
@@ -1013,13 +1069,13 @@ This is due to some terraform limitation and we will update the module once terr
 
     - [**`branch_name_pattern`**](#attr-rulesets-rules-branch_name_pattern): *(Optional `object(ruleset_branch_name_pattern)`)*<a name="attr-rulesets-rules-branch_name_pattern"></a>
 
-      Regex enforcement for branch names.
+      Pattern enforcement for branch names.
 
       The `ruleset_branch_name_pattern` object accepts the following attributes:
 
       - [**`operator`**](#attr-rulesets-rules-branch_name_pattern-operator): *(Optional `string`)*<a name="attr-rulesets-rules-branch_name_pattern-operator"></a>
 
-        Currently only `regex` is supported.
+        One of `starts_with`, `ends_with`, `contains`, or `regex`.
 
       - [**`pattern`**](#attr-rulesets-rules-branch_name_pattern-pattern): *(Optional `string`)*<a name="attr-rulesets-rules-branch_name_pattern-pattern"></a>
 
@@ -1035,13 +1091,13 @@ This is due to some terraform limitation and we will update the module once terr
 
     - [**`tag_name_pattern`**](#attr-rulesets-rules-tag_name_pattern): *(Optional `object(ruleset_tag_name_pattern)`)*<a name="attr-rulesets-rules-tag_name_pattern"></a>
 
-      Regex enforcement for tag names.
+      Pattern enforcement for tag names.
 
       The `ruleset_tag_name_pattern` object accepts the following attributes:
 
       - [**`operator`**](#attr-rulesets-rules-tag_name_pattern-operator): *(Optional `string`)*<a name="attr-rulesets-rules-tag_name_pattern-operator"></a>
 
-        Currently only `regex` is supported.
+        One of `starts_with`, `ends_with`, `contains`, or `regex`.
 
       - [**`pattern`**](#attr-rulesets-rules-tag_name_pattern-pattern): *(Optional `string`)*<a name="attr-rulesets-rules-tag_name_pattern-pattern"></a>
 
@@ -1128,6 +1184,20 @@ This is due to some terraform limitation and we will update the module once terr
       - [**`min_entries_to_merge_wait_minutes`**](#attr-rulesets-rules-merge_queue-min_entries_to_merge_wait_minutes): *(Optional `number`)*<a name="attr-rulesets-rules-merge_queue-min_entries_to_merge_wait_minutes"></a>
 
         Wait time before merging minimal entries.
+
+    - [**`copilot_code_review`**](#attr-rulesets-rules-copilot_code_review): *(Optional `object(ruleset_copilot_code_review)`)*<a name="attr-rulesets-rules-copilot_code_review"></a>
+
+      Copilot code review settings for pull requests.
+
+      The `ruleset_copilot_code_review` object accepts the following attributes:
+
+      - [**`review_on_push`**](#attr-rulesets-rules-copilot_code_review-review_on_push): *(Optional `bool`)*<a name="attr-rulesets-rules-copilot_code_review-review_on_push"></a>
+
+        Enable Copilot review on push events.
+
+      - [**`review_draft_pull_requests`**](#attr-rulesets-rules-copilot_code_review-review_draft_pull_requests): *(Optional `bool`)*<a name="attr-rulesets-rules-copilot_code_review-review_draft_pull_requests"></a>
+
+        Enable Copilot review on draft pull requests.
 
 #### Issue Labels Configuration
 

@@ -1027,7 +1027,7 @@ section {
             type        = string
             default     = "branch"
             description = <<-END
-              Scope of the ruleset: `branch` or `tag`.
+              Scope of the ruleset: `branch`, `tag`, or `push`.
             END
           }
 
@@ -1035,7 +1035,7 @@ section {
             type        = string
             default     = "active"
             description = <<-END
-              Enforcement mode, either `active` or `evaluate`.
+              Enforcement mode: `disabled`, `active`, or `evaluate`. Note that `evaluate` is only available for organisations with a GitHub Enterprise plan.
             END
           }
 
@@ -1043,7 +1043,7 @@ section {
             type        = object(ruleset_conditions)
             default     = { ref_name = { include = ["~DEFAULT_BRANCH"], exclude = [] } }
             description = <<-END
-              Target refs to which the ruleset applies (supports `~DEFAULT_BRANCH` and glob-style patterns).
+              Target refs to which the ruleset applies (supports `~DEFAULT_BRANCH` and glob-style patterns). Optional for `push` target rulesets — when omitted, the conditions block is not rendered.
             END
 
             attribute "ref_name" {
@@ -1065,14 +1065,14 @@ section {
           }
 
           attribute "bypass_actors" {
-            type = list(any)
+            type        = list(any)
             description = <<-END
-              Optional list of actors allowed to bypass the ruleset. `actor_type` can be Integration, Team, User, OrganizationAdmin, or RepositoryRole. `bypass_mode` is usually `always` or `pull_request`.
+              Optional list of actors allowed to bypass the ruleset. `actor_type` can be Integration, Team, User, OrganizationAdmin, RepositoryRole, or DeployKey. `bypass_mode` is usually `always`, `pull_request`, or `exempt`.
             END
 
             attribute "actor_type" {
               type        = string
-              description = "Integration, Team, User, OrganizationAdmin, or RepositoryRole."
+              description = "Integration, Team, User, OrganizationAdmin, RepositoryRole, or DeployKey."
             }
 
             attribute "actor_id" {
@@ -1082,12 +1082,12 @@ section {
 
             attribute "bypass_mode" {
               type        = string
-              description = "Typically `always` or `pull_request`."
+              description = "Typically `always`, `pull_request`, or `exempt`."
             }
           }
 
           attribute "rules" {
-            type = object(ruleset_rules)
+            type        = object(ruleset_rules)
             description = <<-END
               Set of rules enforced by the ruleset. Unspecified flags default to `false`; nested blocks are optional.
             END
@@ -1195,6 +1195,41 @@ section {
                 type        = bool
                 description = "Require all review threads resolved."
               }
+
+              attribute "allowed_merge_methods" {
+                type        = list(string)
+                description = "Allowed merge methods (e.g. `merge`, `squash`, `rebase`)."
+              }
+
+              attribute "required_reviewers" {
+                type        = object(ruleset_required_reviewers)
+                description = "Require specific reviewers to approve matching files."
+
+                attribute "file_patterns" {
+                  type        = list(string)
+                  description = "File patterns (fnmatch syntax) that must be approved by the reviewer."
+                }
+
+                attribute "minimum_approvals" {
+                  type        = number
+                  description = "Minimum number of approvals required (0 for optional)."
+                }
+
+                attribute "reviewer" {
+                  type        = object(ruleset_reviewer)
+                  description = "Reviewer identity."
+
+                  attribute "id" {
+                    type        = number
+                    description = "Team ID of the reviewer."
+                  }
+
+                  attribute "type" {
+                    type        = string
+                    description = "Reviewer type, currently only `Team` is supported."
+                  }
+                }
+              }
             }
 
             attribute "required_code_scanning" {
@@ -1224,11 +1259,11 @@ section {
 
             attribute "commit_message_pattern" {
               type        = object(ruleset_commit_message_pattern)
-              description = "Regex enforcement for commit messages."
+              description = "Pattern enforcement for commit messages."
 
               attribute "operator" {
                 type        = string
-                description = "Currently only `regex` is supported."
+                description = "One of `starts_with`, `ends_with`, `contains`, or `regex`."
               }
 
               attribute "pattern" {
@@ -1249,11 +1284,11 @@ section {
 
             attribute "commit_author_email_pattern" {
               type        = object(ruleset_commit_author_email_pattern)
-              description = "Regex enforcement for commit author email."
+              description = "Pattern enforcement for commit author email."
 
               attribute "operator" {
                 type        = string
-                description = "Currently only `regex` is supported."
+                description = "One of `starts_with`, `ends_with`, `contains`, or `regex`."
               }
 
               attribute "pattern" {
@@ -1274,11 +1309,11 @@ section {
 
             attribute "committer_email_pattern" {
               type        = object(ruleset_committer_email_pattern)
-              description = "Regex enforcement for committer email."
+              description = "Pattern enforcement for committer email."
 
               attribute "operator" {
                 type        = string
-                description = "Currently only `regex` is supported."
+                description = "One of `starts_with`, `ends_with`, `contains`, or `regex`."
               }
 
               attribute "pattern" {
@@ -1299,11 +1334,11 @@ section {
 
             attribute "branch_name_pattern" {
               type        = object(ruleset_branch_name_pattern)
-              description = "Regex enforcement for branch names."
+              description = "Pattern enforcement for branch names."
 
               attribute "operator" {
                 type        = string
-                description = "Currently only `regex` is supported."
+                description = "One of `starts_with`, `ends_with`, `contains`, or `regex`."
               }
 
               attribute "pattern" {
@@ -1324,11 +1359,11 @@ section {
 
             attribute "tag_name_pattern" {
               type        = object(ruleset_tag_name_pattern)
-              description = "Regex enforcement for tag names."
+              description = "Pattern enforcement for tag names."
 
               attribute "operator" {
                 type        = string
-                description = "Currently only `regex` is supported."
+                description = "One of `starts_with`, `ends_with`, `contains`, or `regex`."
               }
 
               attribute "pattern" {
@@ -1424,6 +1459,21 @@ section {
               attribute "min_entries_to_merge_wait_minutes" {
                 type        = number
                 description = "Wait time before merging minimal entries."
+              }
+            }
+
+            attribute "copilot_code_review" {
+              type        = object(ruleset_copilot_code_review)
+              description = "Copilot code review settings for pull requests."
+
+              attribute "review_on_push" {
+                type        = bool
+                description = "Enable Copilot review on push events."
+              }
+
+              attribute "review_draft_pull_requests" {
+                type        = bool
+                description = "Enable Copilot review on draft pull requests."
               }
             }
           }

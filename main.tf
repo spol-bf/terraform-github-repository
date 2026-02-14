@@ -326,10 +326,17 @@ resource "github_repository_ruleset" "ruleset" {
   enforcement = each.value.enforcement
   repository  = github_repository.repository.name
 
-  conditions {
-    ref_name {
-      include = try(each.value.conditions.ref_name.include, ["~DEFAULT_BRANCH"])
-      exclude = try(each.value.conditions.ref_name.exclude, [])
+  dynamic "conditions" {
+    for_each = (
+      each.value.target != "push" ||
+      try(each.value.conditions.ref_name, null) != null
+    ) ? [true] : []
+
+    content {
+      ref_name {
+        include = try(each.value.conditions.ref_name.include, ["~DEFAULT_BRANCH"])
+        exclude = try(each.value.conditions.ref_name.exclude, [])
+      }
     }
   }
 
@@ -420,6 +427,25 @@ resource "github_repository_ruleset" "ruleset" {
         require_last_push_approval        = try(pull_request.value.require_last_push_approval, null)
         required_approving_review_count   = try(pull_request.value.required_approving_review_count, null)
         required_review_thread_resolution = try(pull_request.value.required_review_thread_resolution, null)
+        allowed_merge_methods             = try(pull_request.value.allowed_merge_methods, null)
+
+        dynamic "required_reviewers" {
+          for_each = try(pull_request.value.required_reviewers, null) != null ? [pull_request.value.required_reviewers] : []
+
+          content {
+            file_patterns     = required_reviewers.value.file_patterns
+            minimum_approvals = try(required_reviewers.value.minimum_approvals, 0)
+
+            dynamic "reviewer" {
+              for_each = try(required_reviewers.value.reviewer, null) != null ? [required_reviewers.value.reviewer] : []
+
+              content {
+                id   = reviewer.value.id
+                type = try(reviewer.value.type, "Team")
+              }
+            }
+          }
+        }
       }
     }
 
@@ -504,6 +530,15 @@ resource "github_repository_ruleset" "ruleset" {
         merge_method                      = try(merge_queue.value.merge_method, null)
         min_entries_to_merge              = try(merge_queue.value.min_entries_to_merge, null)
         min_entries_to_merge_wait_minutes = try(merge_queue.value.min_entries_to_merge_wait_minutes, null)
+      }
+    }
+
+    dynamic "copilot_code_review" {
+      for_each = try(each.value.rules.copilot_code_review, null) != null ? [each.value.rules.copilot_code_review] : []
+
+      content {
+        review_on_push             = try(copilot_code_review.value.review_on_push, null)
+        review_draft_pull_requests = try(copilot_code_review.value.review_draft_pull_requests, null)
       }
     }
   }

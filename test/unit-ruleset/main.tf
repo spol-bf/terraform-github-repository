@@ -31,6 +31,25 @@ module "repository" {
           ]
         }
       }
+    },
+    {
+      name        = "${var.ruleset_name}-push"
+      target      = "push"
+      enforcement = "active"
+
+      rules = {
+        creation         = true
+        deletion         = true
+        non_fast_forward = true
+
+        file_path_restriction = {
+          restricted_file_paths = ["/secrets/**"]
+        }
+
+        max_file_size = {
+          max_file_size = 10485760
+        }
+      }
     }
   ]
 }

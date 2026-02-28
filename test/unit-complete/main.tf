@@ -46,7 +46,6 @@ module "repository" {
   merge_commit_title          = var.merge_commit_title
   merge_commit_message        = var.merge_commit_message
   is_template                 = var.is_template
-  has_downloads               = var.has_downloads
   auto_init                   = var.auto_init
   gitignore_template          = var.gitignore_template
   license_template            = var.license_template
@@ -156,8 +155,6 @@ module "repository" {
     },
     tls_private_key.deploy[1].public_key_openssh
   ]
-
-  projects = var.projects
 
   autolink_references = var.autolink_references
 

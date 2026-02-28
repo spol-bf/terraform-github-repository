@@ -95,12 +95,6 @@ variable "merge_commit_message" {
   default     = "PR_BODY"
 }
 
-variable "has_downloads" {
-  description = "Set to true to enable the (deprecated) downloads features on the repository."
-  type        = bool
-  default     = false
-}
-
 variable "auto_init" {
   description = "Wether or not to produce an initial commit in the repository."
   type        = bool
@@ -117,15 +111,6 @@ variable "license_template" {
   description = "Use the name of the template without the extension. For example, 'mit' or 'mpl-2.0'. Available licences: https://github.com/github/choosealicense.com/tree/gh-pages/_licenses"
   type        = string
   default     = "mit"
-}
-
-variable "projects" {
-  description = "A list of projects to create."
-  type = list(object({
-    name = string,
-    body = string
-  }))
-  default = []
 }
 
 variable "issue_labels" {

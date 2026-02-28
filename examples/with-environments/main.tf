@@ -19,7 +19,6 @@ module "repository" {
   allow_rebase_merge = false
   allow_squash_merge = true
   allow_auto_merge   = true
-  has_downloads      = false
   auto_init          = true
   gitignore_template = "Node"
   license_template   = "mit"

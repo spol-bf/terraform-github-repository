@@ -126,12 +126,6 @@ variable "merge_commit_message" {
   default     = null
 }
 
-variable "has_downloads" {
-  description = "(Optional) Set to true to enable the (deprecated) downloads features on the repository. (Default: false)"
-  type        = bool
-  default     = null
-}
-
 variable "auto_init" {
   description = "(Optional) Wether or not to produce an initial commit in the repository. (Default: true)"
   type        = bool
@@ -581,24 +575,6 @@ variable "deploy_keys_computed" {
   #     title     = "CI User Deploy Key"
   #     key       = computed.resource
   #     read_only = true
-  #   }
-  # ]
-
-  default = []
-}
-
-variable "projects" {
-  description = "(Optional) Create and manage projects for GitHub repository."
-  type = list(object({
-    name = string
-    body = string
-  }))
-
-  # Example:
-  # projects = [
-  #   {
-  #     name = "Testproject"
-  #     body = "This is a fancy test project for testing"
   #   }
   # ]
 

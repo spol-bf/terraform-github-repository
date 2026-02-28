@@ -314,14 +314,6 @@ section {
         END
       }
 
-      variable "has_downloads" {
-        type        = bool
-        default     = false
-        description = <<-END
-          Set to `true` to enable the (deprecated) downloads features on the repository.
-        END
-      }
-
       variable "is_template" {
         type        = bool
         default     = false
@@ -1543,42 +1535,6 @@ section {
       }
 
       section {
-        title = "Projects Configuration"
-
-        variable "projects" {
-          type        = list(project)
-          default     = []
-          description = <<-END
-            This resource allows you to create and manage projects for GitHub repository.
-          END
-
-          attribute "name" {
-            required    = true
-            type        = string
-            description = <<-END
-              The name of the project.
-            END
-          }
-
-          attribute "body" {
-            type        = string
-            default     = ""
-            description = <<-END
-              The body of the project.
-            END
-          }
-
-          attribute "id" {
-            type        = string
-            default     = "name"
-            description = <<-END
-              Specifies an ID which is used to prevent resource recreation when the order in the list of projects changes.
-            END
-          }
-        }
-      }
-
-      section {
         title = "Webhooks Configuration"
 
         variable "webhooks" {
@@ -1835,14 +1791,6 @@ section {
         `deploy_keys` and `deploy_keys_computed` as returned by the
         [`github_repository_deploy_key`] resource keyed by the input `id` of the
         key.
-      END
-    }
-
-    output "projects" {
-      type        = object(project)
-      description = <<-END
-        A map of Project objects keyed by the `id` of the project as returned by
-        the [`github_repository_project`] resource
       END
     }
 

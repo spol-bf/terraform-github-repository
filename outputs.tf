@@ -41,14 +41,14 @@ output "branches" {
   description = "A map of branch objects keyed by branch name."
 }
 
+output "ruleset_ids" {
+  value       = { for k, v in github_repository_ruleset.ruleset : k => v.id }
+  description = "A map of repository ruleset IDs keyed by the ruleset key."
+}
+
 output "collaborators" {
   value       = github_repository_collaborator.collaborator
   description = "A map of collaborator objects keyed by collaborator.name."
-}
-
-output "projects" {
-  value       = github_repository_project.repository_project
-  description = "A map of projects keyed by project input id."
 }
 
 output "issue_labels" {
@@ -82,6 +82,31 @@ output "secrets" {
 output "app_installations" {
   value       = github_app_installation_repository.app_installation_repository
   description = "A map of deploy app installations keyed by installation id."
+}
+
+# ----------------------------------------------------------------------------------------------------------------------
+# ENVIRONMENT OUTPUTS
+# ----------------------------------------------------------------------------------------------------------------------
+
+output "environments" {
+  value       = github_repository_environment.environment
+  description = "A map of environment objects keyed by environment name."
+}
+
+output "environment_secrets" {
+  value       = github_actions_environment_secret.environment_secret
+  sensitive   = true
+  description = "A map of environment secrets keyed by environment:secret_name."
+}
+
+output "environment_variables" {
+  value       = github_actions_environment_variable.environment_variable
+  description = "A map of environment variables keyed by environment:variable_name."
+}
+
+output "deployment_policies" {
+  value       = github_repository_environment_deployment_policy.deployment_policy
+  description = "A map of deployment policies keyed by environment:pattern."
 }
 
 # ----------------------------------------------------------------------------------------------------------------------

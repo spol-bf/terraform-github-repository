@@ -102,9 +102,27 @@ variable "delete_branch_on_merge" {
   default     = null
 }
 
-variable "has_downloads" {
-  description = "(Optional) Set to true to enable the (deprecated) downloads features on the repository. (Default: false)"
-  type        = bool
+variable "squash_merge_commit_title" {
+  description = "(Optional) Can be 'PR_TITLE' or 'COMMIT_OR_PR_TITLE' for a default squash merge commit title. (Default: provider default)"
+  type        = string
+  default     = null
+}
+
+variable "squash_merge_commit_message" {
+  description = "(Optional) Can be 'PR_BODY', 'COMMIT_MESSAGES', or 'BLANK' for a default squash merge commit message. (Default: provider default)"
+  type        = string
+  default     = null
+}
+
+variable "merge_commit_title" {
+  description = "(Optional) Can be 'PR_TITLE' or 'MERGE_MESSAGE' for a default merge commit title. (Default: provider default)"
+  type        = string
+  default     = null
+}
+
+variable "merge_commit_message" {
+  description = "(Optional) Can be 'PR_TITLE', 'PR_BODY', or 'BLANK' for a default merge commit message. (Default: provider default)"
+  type        = string
   default     = null
 }
 
@@ -333,9 +351,7 @@ variable "branch_protections_v4" {
   #       pattern                         = string
   #       allows_deletions                = optional(bool, false)
   #       allows_force_pushes             = optional(bool, false)
-  #       blocks_creations                = optional(bool, false)
   #       enforce_admins                  = optional(bool, false)
-  #       push_restrictions               = optional(list(string), [])
   #       require_conversation_resolution = optional(bool, false)
   #       require_signed_commits          = optional(bool, false)
   #       required_linear_history         = optional(bool, false)
@@ -370,6 +386,124 @@ variable "branch_protections_v4" {
       ]
     )
     error_message = "The value for branch_protections_v4.required_pull_request_reviews.required_approving_review_count must be between 0 and 6, inclusively."
+  }
+}
+
+variable "rulesets" {
+  description = "(Optional) Repository rulesets to apply to this repository. Default is []."
+  type        = any
+  default     = []
+
+  # Example:
+  # rulesets = [
+  #   {
+  #     name        = "protect-main"
+  #     target      = "branch"
+  #     enforcement = "active"
+  #     conditions = {
+  #       ref_name = {
+  #         include = ["~DEFAULT_BRANCH"]
+  #         exclude = ["refs/heads/chore/*"]
+  #       }
+  #     }
+  #     rules = {
+  #       required_linear_history = true
+  #       required_status_checks = {
+  #         strict_required_status_checks_policy = true
+  #         required_check = [
+  #           { context = "ci/test" }
+  #         ]
+  #       }
+  #       required_signatures = true
+  #     }
+  #   }
+  # ]
+
+  validation {
+    condition     = alltrue([for r in var.rulesets : try(r.name != "", false)])
+    error_message = "Each ruleset must set a non-empty name."
+  }
+
+  validation {
+    condition = alltrue([
+      for r in var.rulesets :
+      contains(["branch", "tag", "push"], try(r.target, "branch"))
+    ])
+    error_message = "Ruleset target must be \"branch\", \"tag\", or \"push\"."
+  }
+
+  validation {
+    condition = alltrue([
+      for r in var.rulesets :
+      contains(["disabled", "active", "evaluate"], try(r.enforcement, "active"))
+    ])
+    error_message = "Ruleset enforcement must be \"disabled\", \"active\", or \"evaluate\"."
+  }
+
+  validation {
+    condition = alltrue([
+      for r in var.rulesets :
+      alltrue([
+        for actor in try(r.bypass_actors, []) :
+        contains(["Integration", "Team", "User", "OrganizationAdmin", "RepositoryRole", "DeployKey"], try(actor.actor_type, ""))
+      ])
+    ])
+    error_message = "Each bypass_actors.actor_type must be Integration, Team, User, OrganizationAdmin, RepositoryRole, or DeployKey."
+  }
+
+  validation {
+    condition = alltrue([
+      for r in var.rulesets :
+      try(r.rules.commit_message_pattern == null, true) || (
+        contains(["starts_with", "ends_with", "contains", "regex"], r.rules.commit_message_pattern.operator) &&
+        length(try(r.rules.commit_message_pattern.pattern, "")) > 0
+      )
+    ])
+    error_message = "rules.commit_message_pattern requires operator \"starts_with\", \"ends_with\", \"contains\", or \"regex\" and a non-empty pattern."
+  }
+
+  validation {
+    condition = alltrue([
+      for r in var.rulesets :
+      try(r.rules.branch_name_pattern == null, true) || (
+        contains(["starts_with", "ends_with", "contains", "regex"], r.rules.branch_name_pattern.operator) &&
+        length(try(r.rules.branch_name_pattern.pattern, "")) > 0
+      )
+    ])
+    error_message = "rules.branch_name_pattern requires operator \"starts_with\", \"ends_with\", \"contains\", or \"regex\" and a non-empty pattern."
+  }
+
+  validation {
+    condition = alltrue([
+      for r in var.rulesets :
+      try(r.rules.tag_name_pattern == null, true) || (
+        contains(["starts_with", "ends_with", "contains", "regex"], r.rules.tag_name_pattern.operator) &&
+        length(try(r.rules.tag_name_pattern.pattern, "")) > 0
+      )
+    ])
+    error_message = "rules.tag_name_pattern requires operator \"starts_with\", \"ends_with\", \"contains\", or \"regex\" and a non-empty pattern."
+  }
+
+  validation {
+    condition = alltrue([
+      for r in var.rulesets :
+      try(r.rules.commit_author_email_pattern == null, true) || (
+        contains(["starts_with", "ends_with", "contains", "regex"], r.rules.commit_author_email_pattern.operator) &&
+        length(try(r.rules.commit_author_email_pattern.pattern, "")) > 0
+      )
+    ])
+    error_message = "rules.commit_author_email_pattern requires operator \"starts_with\", \"ends_with\", \"contains\", or \"regex\" and a non-empty pattern."
+  }
+
+  validation {
+    condition = alltrue([
+      for r in var.rulesets :
+      try(r.rules.committer_email_pattern == null, true) || (
+        contains(["starts_with", "ends_with", "contains", "regex"], r.rules.committer_email_pattern.operator) &&
+        length(try(r.rules.committer_email_pattern.pattern, "")) > 0
+      )
+    ])
+    error_message = "rules.committer_email_pattern requires operator \"starts_with\", \"ends_with\", \"contains\", or \"regex\" and a non-empty pattern."
   }
 }
 
@@ -447,24 +581,6 @@ variable "deploy_keys_computed" {
   default = []
 }
 
-variable "projects" {
-  description = "(Optional) Create and manage projects for GitHub repository."
-  type = list(object({
-    name = string
-    body = string
-  }))
-
-  # Example:
-  # projects = [
-  #   {
-  #     name = "Testproject"
-  #     body = "This is a fancy test project for testing"
-  #   }
-  # ]
-
-  default = []
-}
-
 variable "webhooks" {
   description = "(Optional) Configuring webhooks. For details please check: https://www.terraform.io/docs/providers/github/r/repository_webhook.html"
   type        = any
@@ -519,6 +635,18 @@ variable "encrypted_secrets" {
   default = {}
 }
 
+variable "actions_variables" {
+  description = "(Optional) Configuring actions variables. For details please check: https://registry.terraform.io/providers/integrations/github/latest/docs/resources/actions_variable"
+  type        = map(string)
+
+  # Example:
+  # actions_variables = {
+  #     "MY_VARIABLE" = "my_value"
+  # }
+
+  default = {}
+}
+
 
 variable "autolink_references" {
   description = "(Optional) Configuring autolink references. For details please check: https://registry.terraform.io/providers/integrations/github/latest/docs/resources/repository_autolink_reference"
@@ -544,6 +672,12 @@ variable "vulnerability_alerts" {
   default     = null
 }
 
+variable "web_commit_signoff_required" {
+  type        = bool
+  description = "(Optional) Require contributors to sign off on commits to repositories within the organization."
+  default     = null
+}
+
 variable "archive_on_destroy" {
   type        = string
   description = "(Optional) Set to `false` to not archive the repository instead of deleting on destroy."
@@ -554,6 +688,71 @@ variable "app_installations" {
   type        = set(string)
   description = "(Optional) A list of GitHub App IDs to be installed in this repository."
   default     = []
+}
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# ENVIRONMENT CONFIGURATION
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+variable "environments" {
+  description = "(Optional) A list of deployment environments to create and configure."
+  type = list(object({
+    name              = string
+    wait_timer        = optional(number)
+    can_admins_bypass = optional(bool, true)
+
+    reviewers = optional(object({
+      teams = optional(list(string), [])
+      users = optional(list(string), [])
+    }))
+
+    deployment_branch_policy = optional(object({
+      protected_branches     = optional(bool, false)
+      custom_branch_policies = optional(bool, false)
+    }))
+
+    branch_patterns = optional(list(string), [])
+
+    secrets = optional(map(object({
+      plaintext = optional(string)
+      encrypted = optional(string)
+    })), {})
+
+    variables = optional(map(string), {})
+  }))
+  default = []
+
+  validation {
+    condition = alltrue([
+      for env in var.environments : env.wait_timer == null || (env.wait_timer >= 0 && env.wait_timer <= 43200)
+    ])
+    error_message = "Environment wait_timer must be between 0 and 43200 seconds (12 hours)."
+  }
+
+  validation {
+    condition = alltrue([
+      for env in var.environments : length(env.name) > 0 && length(env.name) <= 255
+    ])
+    error_message = "Environment name must be between 1 and 255 characters."
+  }
+
+  validation {
+    condition = alltrue([
+      for env in var.environments : alltrue([
+        for secret_name, secret_value in try(env.secrets, {}) :
+        (secret_value.plaintext != null) != (secret_value.encrypted != null)
+      ])
+    ])
+    error_message = "Each environment secret must have exactly one of 'plaintext' or 'encrypted' specified, not both."
+  }
+
+  validation {
+    condition = alltrue([
+      for env in var.environments :
+      !try(env.deployment_branch_policy.custom_branch_policies, false) || length(try(env.branch_patterns, [])) > 0
+    ])
+    error_message = "When custom_branch_policies is true, branch_patterns must be specified and non-empty."
+  }
 }
 
 # ------------------------------------------------------------------------------

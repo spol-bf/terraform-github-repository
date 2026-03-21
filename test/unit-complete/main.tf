@@ -29,25 +29,28 @@ module "repository" {
     github_team.team
   ]
 
-  name                   = var.name
-  description            = var.description
-  homepage_url           = var.url
-  private                = false
-  has_issues             = var.has_issues
-  has_projects           = var.has_projects
-  has_wiki               = var.has_wiki
-  allow_merge_commit     = var.allow_merge_commit
-  allow_rebase_merge     = var.allow_rebase_merge
-  allow_squash_merge     = var.allow_squash_merge
-  allow_auto_merge       = var.allow_auto_merge
-  delete_branch_on_merge = var.delete_branch_on_merge
-  is_template            = var.is_template
-  has_downloads          = var.has_downloads
-  auto_init              = var.auto_init
-  gitignore_template     = var.gitignore_template
-  license_template       = var.license_template
-  archived               = false
-  topics                 = var.topics
+  name                        = var.name
+  description                 = var.description
+  homepage_url                = var.url
+  private                     = false
+  has_issues                  = var.has_issues
+  has_projects                = var.has_projects
+  has_wiki                    = var.has_wiki
+  allow_merge_commit          = var.allow_merge_commit
+  allow_rebase_merge          = var.allow_rebase_merge
+  allow_squash_merge          = var.allow_squash_merge
+  allow_auto_merge            = var.allow_auto_merge
+  delete_branch_on_merge      = var.delete_branch_on_merge
+  squash_merge_commit_title   = var.squash_merge_commit_title
+  squash_merge_commit_message = var.squash_merge_commit_message
+  merge_commit_title          = var.merge_commit_title
+  merge_commit_message        = var.merge_commit_message
+  is_template                 = var.is_template
+  auto_init                   = var.auto_init
+  gitignore_template          = var.gitignore_template
+  license_template            = var.license_template
+  archived                    = false
+  topics                      = var.topics
 
   branches = [
     {
@@ -153,11 +156,74 @@ module "repository" {
     tls_private_key.deploy[1].public_key_openssh
   ]
 
-  projects = var.projects
-
   autolink_references = var.autolink_references
 
   app_installations = var.app_installations
+
+  # Test GitHub Environments functionality
+  environments = [
+    {
+      name = "test-development"
+
+      wait_timer        = 0
+      can_admins_bypass = true
+
+      deployment_branch_policy = {
+        protected_branches     = false
+        custom_branch_policies = true
+      }
+      branch_patterns = ["develop", "feature/*"]
+
+      variables = {
+        TEST_ENV  = "development"
+        DEBUG     = "true"
+        API_URL   = "https://dev-api.test.com"
+        LOG_LEVEL = "debug"
+      }
+
+      secrets = {
+        TEST_SECRET = {
+          plaintext = "dev-secret-value"
+        }
+        API_KEY = {
+          plaintext = "dev-api-key-12345"
+        }
+      }
+    },
+
+    {
+      name = "test-production"
+
+      wait_timer        = 60
+      can_admins_bypass = false
+
+      reviewers = {
+        teams = [github_team.team.name]
+        users = [var.team_user]
+      }
+
+      deployment_branch_policy = {
+        protected_branches     = true
+        custom_branch_policies = false
+      }
+
+      variables = {
+        TEST_ENV  = "production"
+        DEBUG     = "false"
+        API_URL   = "https://api.test.com"
+        LOG_LEVEL = "warn"
+      }
+
+      secrets = {
+        TEST_SECRET = {
+          plaintext = "prod-secret-value"
+        }
+        API_KEY = {
+          plaintext = "prod-api-key-67890"
+        }
+      }
+    }
+  ]
 }
 
 # ---------------------------------------------------------------------------------------------------------------------

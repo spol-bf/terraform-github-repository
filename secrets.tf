@@ -17,3 +17,15 @@ resource "github_actions_secret" "repository_secret" {
   plaintext_value = try(each.value.plaintext, null)
   encrypted_value = try(each.value.encrypted, null)
 }
+
+# ---------------------------------------------------------------------------------------------------------------------
+# Action Variables
+# ---------------------------------------------------------------------------------------------------------------------
+
+resource "github_actions_variable" "repository_variable" {
+  for_each = var.actions_variables
+
+  repository    = github_repository.repository.name
+  variable_name = each.key
+  value         = each.value
+}

@@ -71,10 +71,28 @@ variable "allow_auto_merge" {
 }
 
 
-variable "has_downloads" {
-  description = "Set to true to enable the (deprecated) downloads features on the repository."
-  type        = bool
-  default     = false
+variable "squash_merge_commit_title" {
+  description = "Default squash merge commit title."
+  type        = string
+  default     = "PR_TITLE"
+}
+
+variable "squash_merge_commit_message" {
+  description = "Default squash merge commit message."
+  type        = string
+  default     = "PR_BODY"
+}
+
+variable "merge_commit_title" {
+  description = "Default merge commit title."
+  type        = string
+  default     = "PR_TITLE"
+}
+
+variable "merge_commit_message" {
+  description = "Default merge commit message."
+  type        = string
+  default     = "PR_BODY"
 }
 
 variable "auto_init" {
@@ -93,15 +111,6 @@ variable "license_template" {
   description = "Use the name of the template without the extension. For example, 'mit' or 'mpl-2.0'. Available licences: https://github.com/github/choosealicense.com/tree/gh-pages/_licenses"
   type        = string
   default     = "mit"
-}
-
-variable "projects" {
-  description = "A list of projects to create."
-  type = list(object({
-    name = string,
-    body = string
-  }))
-  default = []
 }
 
 variable "issue_labels" {

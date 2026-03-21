@@ -24,7 +24,6 @@ module "repository" {
   allow_rebase_merge = false
   allow_squash_merge = false
   allow_auto_merge   = true
-  has_downloads      = false
   auto_init          = true
   gitignore_template = "Terraform"
   license_template   = "mit"

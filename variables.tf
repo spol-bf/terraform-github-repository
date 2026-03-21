@@ -635,6 +635,18 @@ variable "encrypted_secrets" {
   default = {}
 }
 
+variable "actions_variables" {
+  description = "(Optional) Configuring actions variables. For details please check: https://registry.terraform.io/providers/integrations/github/latest/docs/resources/actions_variable"
+  type        = map(string)
+
+  # Example:
+  # actions_variables = {
+  #     "MY_VARIABLE" = "my_value"
+  # }
+
+  default = {}
+}
+
 
 variable "autolink_references" {
   description = "(Optional) Configuring autolink references. For details please check: https://registry.terraform.io/providers/integrations/github/latest/docs/resources/repository_autolink_reference"
